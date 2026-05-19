@@ -54,7 +54,9 @@ Einspielreihenfolge: Kern zuerst, dann App-SQL — siehe `init.sh`
 (`auth/00_roles.sql` → `auth/01_auth_schema.sql` → `examples/products/db/*`).
 In Produktion spielt das proxvex-Template `331-provision-auth-rls` den Kern ein.
 
-## 2. PostgREST — wie im `postgrest`-Service der `docker-compose.yml`
+## 2. PostgREST
+
+**Entwicklung (`docker-compose.yml`, `postgrest`-Service):** explizite Envs
 
 ```
 PGRST_DB_ANON_ROLE=web_user
@@ -63,7 +65,21 @@ PGRST_JWT_SECRET=@/shared/jwks.json     # Zitadel /oauth/v2/keys (RS256)
 # Produktion zusätzlich: PGRST_JWT_AUD=<aud>
 ```
 
-## 3. Rollen vergeben — wie `bootstrap/bootstrap.sh` (App-Admin, NICHT Kern)
+**Produktion (proxvex PostgREST-Application):** Das Modell von proxvex —
+
+- `db_anon_role` ist ein **Parameter** der proxvex-PostgREST-App
+  (Default `web_anon`; PostgREST startet nur, wenn die Rolle existiert).
+  Für die Basis: **`db_anon_role=web_user`** setzen — die Rolle legt
+  `auth/00_roles.sql` an (in Prod via Template `331-provision-auth-rls`).
+- `db_schemas` (Parameter) bleibt `public`.
+- Die übrigen Variablen (`PGRST_DB_PRE_REQUEST=auth.ensure_principal`,
+  `PGRST_JWT_SECRET=@<jwks>`, ggf. `PGRST_JWT_ROLE_CLAIM_KEY`,
+  `PGRST_JWT_AUD`) gehören als **Defaults in die proxvex-PostgREST-App**
+  (Compose-Env + dokumentiert in deren `application.md`, Abschnitt
+  *Authentication*). Das verdrahtet **Phase C** generisch — Konsument-Apps
+  setzen dann nur noch `db_anon_role`.
+
+## 3. Rollen vergeben — wie `examples/products/bootstrap/bootstrap.sh` (App-Admin, NICHT Kern)
 
 Das Beispiel weist die Demo-Rollen genau so zu:
 
@@ -72,7 +88,7 @@ INSERT INTO auth.user_roles (user_id, role)
   SELECT id,'staff'    FROM auth.users WHERE zitadel_sub IN ('<sub-alice>','<sub-carol>');
 INSERT INTO auth.user_roles (user_id, role)
   SELECT id,'customer' FROM auth.users WHERE zitadel_sub IN ('<sub-bob>','<sub-dave>');
-```
+````
 
 Wer das darf, definiert die App per eigener Policy/Admin auf `auth.user_roles`
 (der Kern speichert nur). Ohne Zuweisung → Default-Deny.
@@ -109,5 +125,6 @@ ein Build läuft gegen jede Umgebung.
 - **Rollen-Vergabe-Autorität:** Kern speichert nur; ohne App-Policy auf
   `auth.user_roles` kann niemand Rollen setzen → alles Default-Deny.
 - **Zitadel-Setup** (Org/User/OIDC-App, Access-Token-Typ JWT): App-/Deploy-Sache
-  — Beispiel: `bootstrap/`; Produktion: proxvex zitadel-App + `331`.
+  — Beispiel: `examples/products/bootstrap/`; Produktion: proxvex
+  zitadel-App + `331`.
 - **Kein nginx im Kern** — Reverse-Proxy/Routing macht die App selbst.

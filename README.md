@@ -45,10 +45,9 @@ Erwartung: Firma-A-User sehen **nur** Firma-A-Produkte; `staff` darf anlegen,
 - `examples/products/web/` — Mini-Angular-App auf dem Kern-Baustein
   (Login, whoami, Produktliste, Anlegen nur für `staff`). Der Build bindet
   `angular-auth/` als `src/auth/` ein (Dockerfile, Context = Repo-Root).
-- `bootstrap/` schreibt zur Laufzeit `config.json` (issuer/clientId/postgrest)
-  → ein Build läuft gegen jede Umgebung.
-- `bootstrap/bootstrap.sh` — idempotenter Zitadel-Bootstrap + Seed.
-- `login/` — minimaler statischer OIDC-PKCE-Client.
+- `examples/products/bootstrap/bootstrap.sh` — idempotenter Zitadel-Bootstrap
+  + Seed; schreibt zur Laufzeit `config.json` (issuer/clientId/postgrest), sodass
+  ein Build gegen jede Umgebung läuft. Beispiel-/Deploy-Sache, nicht Kern.
 
 ## Headless-Verifikation
 

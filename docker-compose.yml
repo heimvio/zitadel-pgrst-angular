@@ -81,7 +81,7 @@ services:
       POSTGREST_PORT: ${POSTGREST_PORT:-3001}
       DEMO_USER_PASSWORD: Demo1!Pass
     volumes:
-      - ./bootstrap:/scripts:ro
+      - ./examples/products/bootstrap:/scripts:ro
       - zbootstrap:/bootstrap:ro
       - shared:/shared
     depends_on:
