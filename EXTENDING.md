@@ -2,8 +2,9 @@
 
 Der **Kern** ist ausschließlich `auth/` (`00_roles.sql` + `01_auth_schema.sql`).
 Er kennt nur Zitadel-**Org** und **User**; Rollen werden **DB-seitig** in
-`auth.user_roles` vergeben (rollennamen-agnostisch). Alles unter `example/`
-ist Beispiel, nicht Kern.
+`auth.user_roles` vergeben (rollennamen-agnostisch). Der generische
+Angular-Baustein liegt in `angular-auth/` (ebenfalls Kern). Alles unter
+`examples/` ist Beispiel, nicht Kern.
 
 ## Vertrag (was der Kern garantiert)
 

@@ -26,22 +26,25 @@ Erwartung: Firma-A-User sehen **nur** Firma-A-Produkte; `staff` darf anlegen,
 
 ## Bausteine
 
-- **`auth/` — generischer KERN** (Single Source of Truth, das was eine App
-  wiederverwendet / proxvex-`331` einspielt):
-  - `auth/00_roles.sql` — PostgREST-Rollen (`web_user`/`authenticator`).
-  - `auth/01_auth_schema.sql` — `auth.organizations/users/user_roles`,
-    `auth.ensure_principal()` (JIT), STABLE-Accessoren, `whoami()`,
-    `public.ensure_principal()`.
-- **`example/` — Beispiel-App** (gehört NICHT zum Kern):
-  - `example/02_products.sql` — Produktliste + RLS (Muster
-    `org_id DEFAULT auth.org_id()`).
-- **`angular/src/auth/` — generischer Angular-Auth-Baustein** (wiederverwendbar,
-  kopier-/pfadbar als Einheit; nebenkosten konsumiert genau das):
-  `AuthService` (OIDC-PKCE via angular-oauth2-oidc, JIT `ensure_principal`,
-  whoami-Profil-Signal, rollennamen-agnostische Helfer), `authInterceptor`,
-  `authGuard`/`roleGuard`, `provideAuth()`. Siehe [EXTENDING.md](EXTENDING.md).
-- **`angular/src/app/` — Mini-Angular-Beispiel** auf dem Baustein
-  (Login, whoami, Produktliste, Anlegen nur für `staff`).
+**KERN (generisch, wiederverwendbar — das, was eine App / proxvex-`331` einspielt):**
+
+- `auth/00_roles.sql` — PostgREST-Rollen (`web_user`/`authenticator`).
+- `auth/01_auth_schema.sql` — `auth.organizations/users/user_roles`,
+  `auth.ensure_principal()` (JIT), STABLE-Accessoren, `whoami()`,
+  `public.ensure_principal()`.
+- `angular-auth/` — generischer Angular-Auth-Baustein (kopier-/pfadbar als
+  Einheit; nebenkosten konsumiert genau das): `AuthService` (OIDC-PKCE via
+  angular-oauth2-oidc, JIT `ensure_principal`, whoami-Profil-Signal,
+  rollennamen-agnostische Helfer), `authInterceptor`, `authGuard`/`roleGuard`,
+  `provideAuth()`. Siehe [EXTENDING.md](EXTENDING.md).
+
+**Beispiel-App (gehört NICHT zum Kern) — `examples/products/`:**
+
+- `examples/products/db/02_products.sql` — Produktliste + RLS (Muster
+  `org_id DEFAULT auth.org_id()`).
+- `examples/products/web/` — Mini-Angular-App auf dem Kern-Baustein
+  (Login, whoami, Produktliste, Anlegen nur für `staff`). Der Build bindet
+  `angular-auth/` als `src/auth/` ein (Dockerfile, Context = Repo-Root).
 - `bootstrap/` schreibt zur Laufzeit `config.json` (issuer/clientId/postgrest)
   → ein Build läuft gegen jede Umgebung.
 - `bootstrap/bootstrap.sh` — idempotenter Zitadel-Bootstrap + Seed.

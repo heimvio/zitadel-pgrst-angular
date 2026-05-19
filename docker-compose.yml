@@ -17,7 +17,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./auth:/sql/auth:ro
-      - ./example:/sql/example:ro
+      - ./examples/products/db:/sql/example:ro
       - ./init.sh:/docker-entrypoint-initdb.d/00_init.sh:ro
     ports:
       - "${POSTGRES_PORT:-55433}:5432"
@@ -113,7 +113,9 @@ services:
 
   # Angular-Beispiel-App auf dem generischen Auth-Baustein (src/auth).
   web:
-    build: ./angular
+    build:
+      context: .
+      dockerfile: examples/products/web/Dockerfile
     restart: unless-stopped
     volumes:
       - shared:/shared:ro
