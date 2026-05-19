@@ -42,6 +42,19 @@ Expected:
 - `staff` can create a product; `customer` cannot — the request is denied
   server-side by RLS (HTTP 4xx).
 
+### Rebuilding after changes
+
+`docker compose up` reuses the already-built `web` image. After editing the
+Angular sources (`examples/products/web/`, `angular-auth/`) rebuild it:
+
+```bash
+docker compose up -d --build web      # or: docker compose up --build
+```
+
+DB changes under `auth/` or `examples/products/db/` only run on an empty
+volume — re-run with `docker compose down -v && docker compose up`. The same
+applies to `bootstrap/` (idempotent via `bootstrap.done`).
+
 Default ports (override in the repo-root `.env`):
 
 | Service | URL |
