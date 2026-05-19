@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>zitadel-pgrst-auth · Demo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{font-family:system-ui,sans-serif;max-width:760px;margin:2rem auto;padding:0 1rem;color:#222}
+  h1{font-size:1.3rem} button{padding:.5rem .9rem;border:0;border-radius:6px;background:#1976d2;color:#fff;cursor:pointer}
+  button.sec{background:#666} table{border-collapse:collapse;width:100%;margin:.5rem 0}
+  th,td{border-bottom:1px solid #eee;text-align:left;padding:.4rem .6rem}
+  pre{background:#f5f5f5;padding:.6rem;border-radius:6px;overflow:auto}
+  .muted{color:#777;font-size:.9rem} .err{color:#c62828}
+  ul{padding-left:1.1rem}
+</style>
+</head>
+<body>
+<h1>zitadel-pgrst-auth — Demo</h1>
+<p class="muted">Zitadel-Login → JWT (RS256) → PostgREST mit RLS. Mandantentrennung
+über <code>auth.org_id()</code>, Rollen über <code>auth.user_roles</code>.</p>
+
+<div id="login">
+  <p>Anmelden bei Zitadel:</p>
+  <p><button id="go">Login</button></p>
+  <div id="creds" class="muted"></div>
+</div>
+
+<div id="app" style="display:none">
+  <p><b id="who"></b> <button id="logout" class="sec">Logout</button></p>
+  <h3>whoami</h3><pre id="whoami">…</pre>
+  <h3>Produkte (nur eigene Organisation)</h3>
+  <div id="prodmsg" class="muted"></div>
+  <table id="prods"><thead><tr><th>Name</th><th>Preis</th></tr></thead><tbody></tbody></table>
+  <h3>Neues Produkt anlegen <span class="muted">(nur <code>staff</code> erlaubt)</span></h3>
+  <p><input id="pname" placeholder="Name"> <input id="pprice" placeholder="9.99" size="6">
+     <button id="add">Anlegen</button> <span id="addmsg"></span></p>
+</div>
+
+<script src="cfg/config.js"></script>
+<script>
+const C = window.OIDC;
+const $ = s => document.querySelector(s);
+const b64u = a => btoa(String.fromCharCode(...new Uint8Array(a))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+async function sha256(s){return await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));}
+function rnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return b64u(a.buffer);}
+
+let DISC=null;
+async function disc(){ if(!DISC){ DISC=await (await fetch(C.issuer+'/.well-known/openid-configuration')).json(); } return DISC; }
+
+async function login(){
+  const d=await disc();
+  const v=rnd(48); sessionStorage.setItem('v',v);
+  const ch=b64u(await sha256(v));
+  const u=new URL(d.authorization_endpoint);
+  u.search=new URLSearchParams({response_type:'code',client_id:C.clientId,
+    redirect_uri:C.redirect,scope:C.scope,code_challenge:ch,code_challenge_method:'S256'});
+  location.href=u;
+}
+async function exchange(code){
+  const d=await disc();
+  const body=new URLSearchParams({grant_type:'authorization_code',code,
+    redirect_uri:C.redirect,client_id:C.clientId,code_verifier:sessionStorage.getItem('v')});
+  const r=await fetch(d.token_endpoint,{method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+  if(!r.ok) throw new Error('Token-Tausch fehlgeschlagen: '+await r.text());
+  return (await r.json()).access_token;
+}
+function tok(){return sessionStorage.getItem('at');}
+async function api(path,opt={}){
+  const r=await fetch(C.postgrest+path,{...opt,
+    headers:{Authorization:'Bearer '+tok(),'Content-Type':'application/json',...(opt.headers||{})}});
+  return r;
+}
+async function render(){
+  $('#login').style.display='none'; $('#app').style.display='';
+  // JIT: Principal (Org+User) einmalig sicherstellen — POST = schreibbare Tx.
+  await api('/rpc/ensure_principal',{method:'POST'});
+  const w=await (await api('/rpc/whoami')).json();
+  $('#whoami').textContent=JSON.stringify(w,null,2);
+  $('#who').textContent='Eingeloggt · org '+(w.org_id||'?')+' · Rollen '+JSON.stringify(w.roles||[]);
+  const pr=await api('/products?select=name,price&order=name');
+  if(pr.ok){ const rows=await pr.json();
+    $('#prods tbody').innerHTML=rows.map(x=>`<tr><td>${x.name}</td><td>${x.price}</td></tr>`).join('')||'';
+    $('#prodmsg').textContent=rows.length+' Produkt(e) — ausschließlich der eigenen Organisation.';
+  } else { $('#prodmsg').innerHTML='<span class="err">Produkte: HTTP '+pr.status+'</span>'; }
+}
+$('#go').onclick=login;
+$('#logout').onclick=()=>{sessionStorage.clear();location.href=C.redirect;};
+$('#add').onclick=async()=>{
+  const body=JSON.stringify({name:$('#pname').value,price:parseFloat($('#pprice').value||'0')});
+  const r=await api('/products',{method:'POST',body,headers:{Prefer:'return=representation'}});
+  $('#addmsg').innerHTML = r.ok
+    ? '<span style="color:#2e7d32">angelegt ✓</span>'
+    : '<span class="err">abgelehnt (HTTP '+r.status+') — Rolle staff nötig</span>';
+  if(r.ok) render();
+};
+
+(async()=>{
+  if(C&&C.demoUsers){ $('#creds').innerHTML='<b>Demo-User</b> (Passwort <code>'+
+    C.demoPassword+'</code>):<ul>'+C.demoUsers.map(u=>'<li>'+u.label+' — <code>'+u.login+'</code></li>').join('')+'</ul>'; }
+  const p=new URLSearchParams(location.search);
+  if(p.get('code')){
+    try{ const at=await exchange(p.get('code')); sessionStorage.setItem('at',at);
+      history.replaceState({},'',C.redirect); }catch(e){ document.body.innerHTML+='<pre class="err">'+e.message+'</pre>'; return; }
+  }
+  if(tok()) render();
+})();
+</script>
+</body>
+</html>
