@@ -51,6 +51,9 @@ services:
       ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
       ZITADEL_ADMIN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD}
+      # Use the built-in v1 login UI (/ui/login). The separate LoginV2 app
+      # (/ui/v2/login) is not part of this stack -> would 404.
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "false"
     volumes:
       - ./zitadel-init.yaml:/init/zitadel-init.yaml:ro
       - zbootstrap:/bootstrap

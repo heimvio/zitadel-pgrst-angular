@@ -31,6 +31,17 @@ done
 curl -sf -H "$ZHOST" "$API/oauth/v2/keys" -o "$SHARED/jwks.json"
 echo "bootstrap: JWKS written."
 
+# Force the built-in v1 login UI: the separate LoginV2 app (/ui/v2/login) is
+# not part of this stack and would 404. Idempotent; also fixes an instance
+# created before this setting existed. Runs even on the JWKS-only re-run path.
+curl -s -H "$ZHOST" \
+  -H "Authorization: Bearer $(cat /bootstrap/admin-client.pat)" \
+  -H "Content-Type: application/json" \
+  -X PUT "$API/v2/features/instance" \
+  -d '{"loginV2":{"required":false}}' >/dev/null \
+  && echo "bootstrap: LoginV2 disabled (using v1 /ui/login)." \
+  || echo "bootstrap: WARN could not set loginV2 feature (continuing)."
+
 if [ -f "$SHARED/bootstrap.done" ]; then
   echo "bootstrap: already initialised (bootstrap.done) — only refreshed JWKS."
   exit 0
