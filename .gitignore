@@ -1,2 +1,3 @@
 *.pat
 .DS_Store
+dist/

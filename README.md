@@ -26,11 +26,11 @@ docker compose logs -f bootstrap     # ready when you see: bootstrap: done.
 
 Then open <http://localhost:8089> and log in with one of the demo users:
 
-| Login | Password | Role |
-|---|---|---|
-| `alice@a.demo` | `Demo1!Pass` | Company A · staff |
+| Login          | Password     | Role                 |
+| -------------- | ------------ | -------------------- |
+| `alice@a.demo` | `Demo1!Pass` | Company A · staff    |
 | `bob@a.demo`   | `Demo1!Pass` | Company A · customer |
-| `carol@b.demo` | `Demo1!Pass` | Company B · staff |
+| `carol@b.demo` | `Demo1!Pass` | Company B · staff    |
 | `dave@b.demo`  | `Demo1!Pass` | Company B · customer |
 
 Expectation: Company-A users see **only** Company-A products; `staff` may
@@ -58,8 +58,8 @@ create, `customer` may not (403). A second `docker compose up` is idempotent.
   (login, whoami, product list, creating staff-only). The build includes
   `angular-auth/` as `src/auth/` (Dockerfile, context = repo root).
 - `examples/products/bootstrap/bootstrap.sh` — idempotent Zitadel bootstrap
-  + seed; writes `config.json` at runtime (issuer/clientId/postgrest) so one
-  build runs against any environment. Example/deploy concern, not core.
+  - seed; writes `config.json` at runtime (issuer/clientId/postgrest) so one
+    build runs against any environment. Example/deploy concern, not core.
 
 ## Headless verification
 
@@ -90,5 +90,14 @@ default-deny without a role, `staff` POST → 201, `customer` POST → denied.
   (demo: Zitadel as root).
 - **PostgREST** does not check `iss`; `aud` unchecked (demo) —
   production: set `PGRST_JWT_AUD`.
+
+## Deployable package (for proxvex)
+
+`./package/build.sh` produces `dist/zitadel-pgrst-auth.tgz` — a self-contained
+artifact: built Angular `web/` (→ nginx web root), `bootstrap/bootstrap.sh`
+and `bootstrap/db/*.sql` (auth core + example schema). proxvex uploads it,
+serves `web/` from nginx and runs the bootstrap + schema. Layout and
+consumption: [package/PACKAGE.md](package/PACKAGE.md). Only Docker is needed
+to build it.
 
 The core ↔ app boundary is documented in [EXTENDING.md](EXTENDING.md).
