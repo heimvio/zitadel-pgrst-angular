@@ -22,9 +22,20 @@ Prerequisite: Docker (with the Compose plugin). From the **repository root**:
 docker compose up
 ```
 
-First start takes a minute or two (Zitadel initialises its database, then the
+First start takes **~1–2 minutes** (Zitadel initialises its database, then the
 bootstrap creates the orgs/users/app and seeds the data). A second
 `docker compose up` is idempotent.
+
+**Knowing when it's ready:** the `bootstrap` service runs last — the web app
+and PostgREST only start after it succeeds. So:
+
+```bash
+docker compose logs -f bootstrap     # ready when you see: bootstrap: done.
+```
+
+(Re-run with existing volumes prints `already initialised … only refreshed
+JWKS` instead — also ready.) Equivalently, <http://localhost:8089> only
+answers once the stack is up.
 
 Then open <http://localhost:8089> and log in with a demo user:
 

@@ -12,6 +12,18 @@ created **just-in-time** in the DB; authorization is purely DB-side via
 docker compose up
 ```
 
+**When is it ready?** The first start takes **~1–2 minutes** while Zitadel
+initialises its database. The `bootstrap` service runs last (the web app and
+PostgREST start only after it succeeds), so it is the readiness signal:
+
+```bash
+docker compose logs -f bootstrap     # ready when you see: bootstrap: done.
+```
+
+(On a later start with existing volumes it instead prints
+`already initialised … only refreshed JWKS` — also ready.) Equivalently:
+<http://localhost:8089> only answers once everything is up.
+
 Then open <http://localhost:8089> and log in with one of the demo users:
 
 | Login | Password | Role |
