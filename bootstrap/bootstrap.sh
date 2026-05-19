@@ -70,9 +70,9 @@ echo "  alice=$ALICE bob=$BOB carol=$CAROL dave=$DAVE"
 
 echo "bootstrap: Projekt + OIDC-App (in Firma A) ..."
 PROJ=$(api POST /management/v1/projects '{"name":"demo"}' "x-zitadel-orgid: $ORGA" | jq -r '.id')
-APPBODY=$(jq -nc --arg r "$LOGIN_ORIGIN/" \
+APPBODY=$(jq -nc --arg r "$LOGIN_ORIGIN/" --arg cb "$LOGIN_ORIGIN/callback" \
   '{name:"spa",
-    redirectUris:[$r],
+    redirectUris:[$r,$cb],
     postLogoutRedirectUris:[$r],
     responseTypes:["OIDC_RESPONSE_TYPE_CODE"],
     grantTypes:["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"],
@@ -115,22 +115,22 @@ INSERT INTO public.products (org_id, name, price)
   FROM (VALUES ('B-Sprocket',12.00),('B-Cog',7.75)) v(n,p);
 SQL
 
-echo "bootstrap: Login-Config schreiben ..."
-cat > "$SHARED/config.js" <<EOF
-window.OIDC = {
-  issuer:    "${ZITADEL_ISSUER}",
-  clientId:  "${CLIENTID}",
-  redirect:  "${LOGIN_ORIGIN}/",
-  postgrest: "http://localhost:${POSTGREST_PORT:-3001}",
-  scope:     "openid profile email urn:zitadel:iam:user:resourceowner",
-  demoUsers: [
-    { label: "Firma A · Mitarbeiter (staff)",  login: "alice@a.demo" },
-    { label: "Firma A · Kunde (customer)",     login: "bob@a.demo"   },
-    { label: "Firma B · Mitarbeiter (staff)",  login: "carol@b.demo" },
-    { label: "Firma B · Kunde (customer)",     login: "dave@b.demo"  }
-  ],
-  demoPassword: "${DEMO_USER_PASSWORD}"
-};
+echo "bootstrap: Runtime-Config (config.json) für die Angular-App schreiben ..."
+cat > "$SHARED/config.json" <<EOF
+{
+  "postgrest": { "url": "http://localhost:${POSTGREST_PORT:-3001}" },
+  "oidc": {
+    "issuer": "${ZITADEL_ISSUER}",
+    "clientId": "${CLIENTID}",
+    "redirectPath": "/callback",
+    "scope": "openid profile email urn:zitadel:iam:user:resourceowner"
+  },
+  "demo": {
+    "password": "${DEMO_USER_PASSWORD}",
+    "users": ["alice@a.demo (Firma A·staff)", "bob@a.demo (Firma A·customer)",
+              "carol@b.demo (Firma B·staff)", "dave@b.demo (Firma B·customer)"]
+  }
+}
 EOF
 
 touch "$SHARED/bootstrap.done"

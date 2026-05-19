@@ -111,17 +111,11 @@ services:
       bootstrap:
         condition: service_completed_successfully
 
-  login:
-    image: python:3-alpine
+  # Angular-Beispiel-App auf dem generischen Auth-Baustein (src/auth).
+  web:
+    build: ./angular
     restart: unless-stopped
-    # /site ist container-lokal beschreibbar (kein verschachtelter RO-Mount):
-    # Quelle + bootstrap-Config werden hineinkopiert, dann statisch serviert.
-    command:
-      - sh
-      - -c
-      - "mkdir -p /site/cfg && cp /src/index.html /site/ && cp /shared/config.js /site/cfg/ && cd /site && exec python -m http.server 8080"
     volumes:
-      - ./login:/src:ro
       - shared:/shared:ro
     ports:
       - "${LOGIN_PORT:-8089}:8080"

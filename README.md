@@ -35,6 +35,15 @@ Erwartung: Firma-A-User sehen **nur** Firma-A-Produkte; `staff` darf anlegen,
 - **`example/` — Beispiel-App** (gehört NICHT zum Kern):
   - `example/02_products.sql` — Produktliste + RLS (Muster
     `org_id DEFAULT auth.org_id()`).
+- **`angular/src/auth/` — generischer Angular-Auth-Baustein** (wiederverwendbar,
+  kopier-/pfadbar als Einheit; nebenkosten konsumiert genau das):
+  `AuthService` (OIDC-PKCE via angular-oauth2-oidc, JIT `ensure_principal`,
+  whoami-Profil-Signal, rollennamen-agnostische Helfer), `authInterceptor`,
+  `authGuard`/`roleGuard`, `provideAuth()`. Siehe [EXTENDING.md](EXTENDING.md).
+- **`angular/src/app/` — Mini-Angular-Beispiel** auf dem Baustein
+  (Login, whoami, Produktliste, Anlegen nur für `staff`).
+- `bootstrap/` schreibt zur Laufzeit `config.json` (issuer/clientId/postgrest)
+  → ein Build läuft gegen jede Umgebung.
 - `bootstrap/bootstrap.sh` — idempotenter Zitadel-Bootstrap + Seed.
 - `login/` — minimaler statischer OIDC-PKCE-Client.
 
