@@ -26,12 +26,15 @@ Erwartung: Firma-A-User sehen **nur** Firma-A-Produkte; `staff` darf anlegen,
 
 ## Bausteine
 
-- `db/01_auth_schema.sql` — **generischer Kern** (Single Source of Truth):
-  `auth.organizations`, `auth.users`, `auth.user_roles`,
-  `auth.ensure_principal()` (JIT), STABLE-Accessoren, `whoami()`.
-- `db/00_roles.sql` — PostgREST-Rollen (`web_user`/`authenticator`).
-- `db/02_app_products.sql` — **Beispiel-App** (Produktliste + RLS). Zeigt, wie
-  eine App auf der Basis aufsetzt; gehört NICHT zum Kern.
+- **`auth/` — generischer KERN** (Single Source of Truth, das was eine App
+  wiederverwendet / proxvex-`331` einspielt):
+  - `auth/00_roles.sql` — PostgREST-Rollen (`web_user`/`authenticator`).
+  - `auth/01_auth_schema.sql` — `auth.organizations/users/user_roles`,
+    `auth.ensure_principal()` (JIT), STABLE-Accessoren, `whoami()`,
+    `public.ensure_principal()`.
+- **`example/` — Beispiel-App** (gehört NICHT zum Kern):
+  - `example/02_products.sql` — Produktliste + RLS (Muster
+    `org_id DEFAULT auth.org_id()`).
 - `bootstrap/bootstrap.sh` — idempotenter Zitadel-Bootstrap + Seed.
 - `login/` — minimaler statischer OIDC-PKCE-Client.
 

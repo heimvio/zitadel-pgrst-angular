@@ -7,7 +7,8 @@ set -eu
 
 : "${AUTHENTICATOR_PASSWORD:?AUTHENTICATOR_PASSWORD muss gesetzt sein}"
 
-for f in /sql/00_roles.sql /sql/01_auth_schema.sql /sql/02_app_products.sql; do
+# Reihenfolge: generischer KERN (auth/) zuerst, dann Beispiel-App (example/).
+for f in /sql/auth/00_roles.sql /sql/auth/01_auth_schema.sql /sql/example/02_products.sql; do
   echo "init.sh: applying $f"
   psql -v ON_ERROR_STOP=1 \
        -v authpw="$AUTHENTICATOR_PASSWORD" \
