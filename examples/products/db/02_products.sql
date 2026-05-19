@@ -1,15 +1,14 @@
 -- ============================================================================
--- 02_app_products.sql — BEISPIEL-APP (nicht Teil des generischen Kerns!)
+-- 02_products.sql — EXAMPLE APP (not part of the generic core!)
 -- ----------------------------------------------------------------------------
--- Produktliste pro Organisation. Zeigt Org-Isolation UND Rollen-Gating mit
--- den App-eigenen Rollen `customer` (nur lesen) und `staff` (lesen+schreiben).
--- Die Basis kennt diese Namen NICHT — sie kommen aus auth.user_roles.
--- In Phase B wird die Grenze auth_schema.sql <-> App final gezogen.
+-- Per-organization product list. Shows org isolation AND role gating with the
+-- app-owned roles `customer` (read only) and `staff` (read+write).
+-- The core does NOT know these names — they come from auth.user_roles.
 -- ============================================================================
 
--- org_id DEFAULT auth.org_id(): org-scoped Tabellen tragen die Org des
--- Aufrufers automatisch ein -> Clients senden kein org_id, RLS WITH CHECK
--- bleibt trotzdem zwingend. (Kernmuster für den EXTENDING-Vertrag.)
+-- org_id DEFAULT auth.org_id(): org-scoped tables fill in the caller's org
+-- automatically -> clients never send org_id, RLS WITH CHECK still enforces it.
+-- (Core pattern for the EXTENDING contract.)
 CREATE TABLE IF NOT EXISTS public.products (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id     uuid NOT NULL DEFAULT auth.org_id() REFERENCES auth.organizations(id) ON DELETE CASCADE,
@@ -21,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_products_org ON public.products(org_id);
 
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 
--- Lesen: eigener Org-Katalog, sichtbar für customer ODER staff.
+-- Read: own org's catalog, visible to customer OR staff.
 DROP POLICY IF EXISTS products_read ON public.products;
 CREATE POLICY products_read ON public.products
   FOR SELECT
@@ -30,7 +29,7 @@ CREATE POLICY products_read ON public.products
     AND (auth.has_role('customer') OR auth.has_role('staff'))
   );
 
--- Schreiben (insert/update/delete): nur staff, nur eigener Org-Katalog.
+-- Write (insert/update/delete): staff only, own org's catalog only.
 DROP POLICY IF EXISTS products_write ON public.products;
 CREATE POLICY products_write ON public.products
   FOR ALL

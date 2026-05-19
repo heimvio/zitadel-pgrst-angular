@@ -1,58 +1,58 @@
 # zitadel-pgrst-auth
 
-Generischer, wiederverwendbarer Baustein: **Zitadel-Login → PostgREST/Postgres
-mit Mandanten-RLS** — ohne Zitadel-Action, ohne nginx-Lua, ohne HMAC, ohne
-gemeinsames JWT-Secret. PostgREST verifiziert das Zitadel-JWT direkt per
-**JWKS/RS256**; Org+User entstehen **Just-in-Time** in der DB; Autorisierung
-rein DB-seitig über `auth.*` + `auth.user_roles`.
+Generic, reusable building block: **Zitadel login → PostgREST/Postgres with
+tenant RLS** — no Zitadel action, no nginx-Lua, no HMAC, no shared JWT secret.
+PostgREST verifies the Zitadel JWT directly via **JWKS/RS256**; org+user are
+created **just-in-time** in the DB; authorization is purely DB-side via
+`auth.*` + `auth.user_roles`.
 
-## Reproduzierbares Deliverable
+## Reproducible deliverable
 
 ```bash
 docker compose up
 ```
 
-Dann <http://localhost:8089> öffnen und mit einem der Demo-User einloggen:
+Then open <http://localhost:8089> and log in with one of the demo users:
 
-| Login | Passwort | Rolle |
+| Login | Password | Role |
 |---|---|---|
-| `alice@a.demo` | `Demo1!Pass` | Firma A · staff |
-| `bob@a.demo`   | `Demo1!Pass` | Firma A · customer |
-| `carol@b.demo` | `Demo1!Pass` | Firma B · staff |
-| `dave@b.demo`  | `Demo1!Pass` | Firma B · customer |
+| `alice@a.demo` | `Demo1!Pass` | Company A · staff |
+| `bob@a.demo`   | `Demo1!Pass` | Company A · customer |
+| `carol@b.demo` | `Demo1!Pass` | Company B · staff |
+| `dave@b.demo`  | `Demo1!Pass` | Company B · customer |
 
-Erwartung: Firma-A-User sehen **nur** Firma-A-Produkte; `staff` darf anlegen,
-`customer` nicht (403). Zweiter `docker compose up` ist idempotent.
+Expectation: Company-A users see **only** Company-A products; `staff` may
+create, `customer` may not (403). A second `docker compose up` is idempotent.
 
-## Bausteine
+## Building blocks
 
-**KERN (generisch, wiederverwendbar — das, was eine App / proxvex-`331` einspielt):**
+**CORE (generic, reusable — what an app / proxvex `331` installs):**
 
-- `auth/00_roles.sql` — PostgREST-Rollen (`web_user`/`authenticator`).
+- `auth/00_roles.sql` — PostgREST roles (`web_user`/`authenticator`).
 - `auth/01_auth_schema.sql` — `auth.organizations/users/user_roles`,
-  `auth.ensure_principal()` (JIT), STABLE-Accessoren, `whoami()`,
+  `auth.ensure_principal()` (JIT), STABLE accessors, `whoami()`,
   `public.ensure_principal()`.
-- `angular-auth/` — generischer Angular-Auth-Baustein (kopier-/pfadbar als
-  Einheit; nebenkosten konsumiert genau das): `AuthService` (OIDC-PKCE via
-  angular-oauth2-oidc, JIT `ensure_principal`, whoami-Profil-Signal,
-  rollennamen-agnostische Helfer), `authInterceptor`, `authGuard`/`roleGuard`,
-  `provideAuth()`. Siehe [EXTENDING.md](EXTENDING.md).
+- `angular-auth/` — generic Angular auth building block (copy-/path-mappable
+  as one unit; nebenkosten consumes exactly this): `AuthService` (OIDC-PKCE via
+  angular-oauth2-oidc, JIT `ensure_principal`, whoami profile signal,
+  role-name-agnostic helpers), `authInterceptor`, `authGuard`/`roleGuard`,
+  `provideAuth()`. See [EXTENDING.md](EXTENDING.md).
 
-**Beispiel-App (gehört NICHT zum Kern) — `examples/products/`:**
+**Example app (NOT part of the core) — `examples/products/`:**
 
-- `examples/products/db/02_products.sql` — Produktliste + RLS (Muster
+- `examples/products/db/02_products.sql` — product list + RLS (pattern
   `org_id DEFAULT auth.org_id()`).
-- `examples/products/web/` — Mini-Angular-App auf dem Kern-Baustein
-  (Login, whoami, Produktliste, Anlegen nur für `staff`). Der Build bindet
-  `angular-auth/` als `src/auth/` ein (Dockerfile, Context = Repo-Root).
-- `examples/products/bootstrap/bootstrap.sh` — idempotenter Zitadel-Bootstrap
-  + Seed; schreibt zur Laufzeit `config.json` (issuer/clientId/postgrest), sodass
-  ein Build gegen jede Umgebung läuft. Beispiel-/Deploy-Sache, nicht Kern.
+- `examples/products/web/` — mini Angular app on the core building block
+  (login, whoami, product list, creating staff-only). The build includes
+  `angular-auth/` as `src/auth/` (Dockerfile, context = repo root).
+- `examples/products/bootstrap/bootstrap.sh` — idempotent Zitadel bootstrap
+  + seed; writes `config.json` at runtime (issuer/clientId/postgrest) so one
+  build runs against any environment. Example/deploy concern, not core.
 
-## Headless-Verifikation
+## Headless verification
 
-`verify.sh` beweist die komplette Kette ohne Browser (echtes Zitadel-JWT via
-client_credentials-Maschinenuser → PostgREST JWKS-Verify → JIT → RLS):
+`verify.sh` proves the full chain without a browser (real Zitadel JWT via a
+client_credentials machine user → PostgREST JWKS verify → JIT → RLS):
 
 ```bash
 docker run --rm --network zitadel-pgrst-auth_default \
@@ -60,21 +60,23 @@ docker run --rm --network zitadel-pgrst-auth_default \
   -v "$PWD/verify.sh:/verify.sh:ro" alpine:3.20 sh /verify.sh
 ```
 
-Erwartet: Org-Isolation (svc-a nur Firma-A-, svc-b nur Firma-B-Produkte),
-Default-Deny ohne Rolle, `staff` POST → 201, `customer` POST → abgelehnt.
+Expected: org isolation (svc-a only Company-A, svc-b only Company-B products),
+default-deny without a role, `staff` POST → 201, `customer` POST → denied.
 
-## Befunde aus Phase A (Input für Phase B / EXTENDING)
+## Findings (input for EXTENDING)
 
-- **Org-ID-Claim** (Schritt 0, empirisch bestätigt):
-  `urn:zitadel:iam:user:resourceowner:id` (Scope
-  `urn:zitadel:iam:user:resourceowner`); `urn:zitadel:iam:org:id` ist leer.
-- **PostgREST GET = read-only Tx:** `PGRST_DB_PRE_REQUEST` darf dort nicht
-  schreiben → `auth.ensure_principal()` ist im read-only-Fall ein No-op; der
-  Login-Client ruft einmalig `POST /rpc/ensure_principal` (schreibbar).
-- **org-scoped Tabellen:** `org_id uuid NOT NULL DEFAULT auth.org_id()` →
-  Clients senden kein `org_id`, RLS `WITH CHECK` bleibt zwingend. Kernmuster.
-- **Zitadel:** Instanz-Auflösung per `Host`-Header (intern `Host: localhost`);
-  FirstInstance-PAT braucht beschreibbares Volume (Demo: Zitadel als root).
-- **PostgREST** prüft kein `iss`; `aud` ungeprüft (Demo) — Prod: `PGRST_JWT_AUD`.
+- **Org-id claim** (empirically confirmed):
+  `urn:zitadel:iam:user:resourceowner:id` (scope
+  `urn:zitadel:iam:user:resourceowner`); `urn:zitadel:iam:org:id` is empty.
+- **PostgREST GET = read-only tx:** `PGRST_DB_PRE_REQUEST` must not write
+  there → `auth.ensure_principal()` is a no-op in the read-only case; the
+  login client calls `POST /rpc/ensure_principal` once (writable).
+- **org-scoped tables:** `org_id uuid NOT NULL DEFAULT auth.org_id()` →
+  clients never send `org_id`, RLS `WITH CHECK` still enforces it. Core pattern.
+- **Zitadel:** instance resolution via the `Host` header (internally
+  `Host: localhost`); the FirstInstance PAT needs a writable volume
+  (demo: Zitadel as root).
+- **PostgREST** does not check `iss`; `aud` unchecked (demo) —
+  production: set `PGRST_JWT_AUD`.
 
-Die Grenze Kern ↔ App wird in Phase B final gezogen (`EXTENDING.md`).
+The core ↔ app boundary is documented in [EXTENDING.md](EXTENDING.md).

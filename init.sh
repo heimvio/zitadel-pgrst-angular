@@ -1,13 +1,13 @@
 #!/bin/sh
-# Orchestrator — läuft EINMAL bei Postgres-Erstinitialisierung
-# (docker-entrypoint-initdb.d). Spielt die Basis-/App-SQL in fester Reihenfolge
-# mit ON_ERROR_STOP ein und reicht das Authenticator-Passwort als psql-Variable
-# durch (versionsunabhängig, kein \getenv nötig).
+# Orchestrator — runs ONCE on first Postgres initialisation
+# (docker-entrypoint-initdb.d). Applies the core/app SQL in a fixed order with
+# ON_ERROR_STOP and passes the authenticator password as a psql variable
+# (version-independent, no \getenv needed).
 set -eu
 
-: "${AUTHENTICATOR_PASSWORD:?AUTHENTICATOR_PASSWORD muss gesetzt sein}"
+: "${AUTHENTICATOR_PASSWORD:?AUTHENTICATOR_PASSWORD must be set}"
 
-# Reihenfolge: generischer KERN (auth/) zuerst, dann Beispiel-App (example/).
+# Order: generic CORE (auth/) first, then the example app (example/).
 for f in /sql/auth/00_roles.sql /sql/auth/01_auth_schema.sql /sql/example/02_products.sql; do
   echo "init.sh: applying $f"
   psql -v ON_ERROR_STOP=1 \
@@ -17,4 +17,4 @@ for f in /sql/auth/00_roles.sql /sql/auth/01_auth_schema.sql /sql/example/02_pro
        -f "$f"
 done
 
-echo "init.sh: Basis-Schema + Beispiel-App eingespielt."
+echo "init.sh: core schema + example app applied."

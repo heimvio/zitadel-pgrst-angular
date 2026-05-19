@@ -1,8 +1,8 @@
 /**
- * Laufzeit-Konfiguration des generischen Auth-Bausteins.
- * Wird beim Start aus `/config.json` geladen (vom Bootstrap geschrieben),
- * sodass EIN Build gegen jede Umgebung läuft und keine Secrets im Bundle sind
- * (nur öffentliche URLs + öffentliche OIDC-clientId).
+ * Runtime configuration of the generic auth building block.
+ * Loaded at startup from `/config.json` (written by the bootstrap), so ONE
+ * build runs against any environment and no secrets are in the bundle
+ * (only public URLs + the public OIDC clientId).
  */
 export interface RuntimeConfig {
   postgrest: { url: string };
@@ -19,7 +19,7 @@ export const runtimeConfig: RuntimeConfig = {
   }
 };
 
-/** Lädt /config.json und merged es in runtimeConfig (fetch, vor DI). */
+/** Loads /config.json and merges it into runtimeConfig (fetch, before DI). */
 export async function loadRuntimeConfig(): Promise<void> {
   try {
     const r = await fetch('config.json', { cache: 'no-store' });
@@ -27,5 +27,5 @@ export async function loadRuntimeConfig(): Promise<void> {
     const c = await r.json() as Partial<RuntimeConfig>;
     if (c.postgrest) Object.assign(runtimeConfig.postgrest, c.postgrest);
     if (c.oidc) Object.assign(runtimeConfig.oidc, c.oidc);
-  } catch { /* keine config.json -> Build-Defaults */ }
+  } catch { /* no config.json -> build defaults */ }
 }

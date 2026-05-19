@@ -3,12 +3,12 @@ import { OAuthService, AuthConfig } from 'angular-oauth2-oidc';
 import { runtimeConfig } from './runtime-config';
 
 /**
- * Generischer Auth-Service (wiederverwendbar, rollennamen-agnostisch).
+ * Generic auth service (reusable, role-name-agnostic).
  *
- * Zitadel-OIDC (Authorization Code + PKCE) via angular-oauth2-oidc — dieselbe
- * Lib/Muster wie nebenkosten. Identität/Rollen kommen NICHT aus Custom-Claims,
- * sondern nach Login per `POST /rpc/ensure_principal` (JIT) + `GET /rpc/whoami`
- * aus der DB. Die App fragt nur `hasRole('<ihr-name>')`.
+ * Zitadel OIDC (Authorization Code + PKCE) via angular-oauth2-oidc — the same
+ * library/pattern as nebenkosten. Identity/roles do NOT come from custom
+ * claims, but after login via `POST /rpc/ensure_principal` (JIT) +
+ * `GET /rpc/whoami` from the DB. The app only asks `hasRole('<its-name>')`.
  */
 export interface Profile {
   user_id: string | null;
@@ -23,7 +23,7 @@ export class AuthService {
   readonly profile = signal<Profile | null>(null);
   readonly ready = signal<boolean>(false);
 
-  /** Vom APP_INITIALIZER aufgerufen: OIDC konfigurieren + Code-Flow abschließen. */
+  /** Called by the APP_INITIALIZER: configure OIDC + finish the code flow. */
   async init(): Promise<void> {
     const cfg: AuthConfig = {
       issuer: runtimeConfig.oidc.issuer,
@@ -39,7 +39,7 @@ export class AuthService {
     try {
       await this.oauth.loadDiscoveryDocumentAndTryLogin();
       if (this.oauth.hasValidAccessToken()) await this.loadProfile();
-    } catch { /* nicht eingeloggt */ }
+    } catch { /* not logged in */ }
     this.ready.set(true);
   }
 
@@ -55,7 +55,7 @@ export class AuthService {
     return this.roles().map(x => x.toLowerCase()).includes(r.toLowerCase());
   }
 
-  /** JIT-Spiegel (POST = schreibbar) + Profil aus whoami laden. */
+  /** JIT mirror (POST = writable) + load profile from whoami. */
   async loadProfile(): Promise<void> {
     const base = runtimeConfig.postgrest.url;
     const h = { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' };

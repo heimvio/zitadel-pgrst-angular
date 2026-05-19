@@ -5,8 +5,8 @@ import { AuthService } from './auth.service';
 import { runtimeConfig } from './runtime-config';
 
 /**
- * Hängt den Bearer-Token nur an PostgREST-Requests; bei 401 einmal Token
- * refreshen + Wiederholung, sonst Fehler durchreichen. Generisch.
+ * Attaches the bearer token only to PostgREST requests; on 401 refresh the
+ * token once + retry, otherwise pass the error through. Generic.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);

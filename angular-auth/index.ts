@@ -1,12 +1,12 @@
 /**
- * Generischer Angular-Auth-Baustein für „Zitadel → PostgREST mit RLS".
- * Wiederverwendbar (z. B. von nebenkosten): kopier-/pfadbar als Einheit.
+ * Generic Angular auth building block for "Zitadel -> PostgREST with RLS".
+ * Reusable (e.g. by nebenkosten): copy-/path-mappable as one unit.
  *
  * - AuthService: OIDC-PKCE (angular-oauth2-oidc), JIT (ensure_principal),
- *   whoami-Profil-Signal, rollennamen-agnostische Helfer.
- * - authInterceptor: Bearer nur an PostgREST, 401-Refresh.
- * - authGuard / roleGuard: Routenschutz.
- * - provideAuth(): APP_INITIALIZER (config.json + OIDC-Init) + Interceptor.
+ *   whoami profile signal, role-name-agnostic helpers.
+ * - authInterceptor: bearer only to PostgREST, 401 refresh.
+ * - authGuard / roleGuard: route protection.
+ * - provideAuth(): APP_INITIALIZER (config.json + OIDC init) + interceptor.
  */
 import { EnvironmentProviders, APP_INITIALIZER, inject } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';

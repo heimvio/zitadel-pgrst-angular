@@ -2,14 +2,14 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 
 /**
- * OIDC-Redirect-Ziel. Der Code wird bereits im APP_INITIALIZER
- * (AuthService.init -> loadDiscoveryDocumentAndTryLogin) verarbeitet;
- * hier nur zurück auf '/'.
+ * OIDC redirect target. The code is already processed in the APP_INITIALIZER
+ * (AuthService.init -> loadDiscoveryDocumentAndTryLogin); here we just go
+ * back to '/'.
  */
 @Component({
   selector: 'app-callback',
   standalone: true,
-  template: `<p class="muted">Anmeldung wird abgeschlossen …</p>`
+  template: `<p class="muted">Finishing sign-in …</p>`
 })
 export class CallbackComponent {
   constructor() {

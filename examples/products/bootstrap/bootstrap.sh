@@ -1,12 +1,12 @@
 #!/bin/sh
 # =============================================================================
-# Idempotenter Zitadel-Bootstrap für die Demo.
-#  - 2 Orgs (Firma A / Firma B), je 1 staff- + 1 customer-User
-#  - 1 Projekt + OIDC-SPA-App (PKCE, Access-Token = JWT)
-#  - Seed auth.organizations/auth.users/auth.user_roles + Beispiel-Produkte
-#  - JWKS für PostgREST + Login-Config schreiben
-# Idempotenz: persistentes /shared-Volume. Ist bootstrap.done vorhanden,
-# wird nur die JWKS aktualisiert (Key-Rotation) und beendet.
+# Idempotent Zitadel bootstrap for the demo.
+#  - 2 orgs (Company A / Company B), each with 1 staff + 1 customer user
+#  - 1 project + OIDC SPA app (PKCE, access token = JWT)
+#  - Seed auth.organizations/auth.users/auth.user_roles + example products
+#  - Write JWKS for PostgREST + the app's runtime config.json
+# Idempotency: persistent /shared volume. If bootstrap.done exists, only the
+# JWKS is refreshed (key rotation) and the script exits.
 # =============================================================================
 set -eu
 
@@ -14,25 +14,25 @@ API="${ZITADEL_API}"
 SHARED=/shared
 mkdir -p "$SHARED"
 
-# Zitadel löst die Instanz per Host-Header auf. Intern erreichen wir Zitadel
-# über den Service-Namen, müssen aber den ExternalDomain-Host vorgeben.
+# Zitadel resolves the instance via the Host header. Internally we reach
+# Zitadel by service name but must present the ExternalDomain host.
 ZHOST="Host: localhost"
 
 apk add --no-cache curl jq postgresql16-client >/dev/null
 
-echo "bootstrap: warte auf Zitadel-API ..."
+echo "bootstrap: waiting for the Zitadel API ..."
 i=0
 until curl -sf -H "$ZHOST" "$API/oauth/v2/keys" >/dev/null 2>&1; do
-  i=$((i+1)); [ "$i" -gt 120 ] && { echo "Zitadel-API nicht erreichbar"; exit 1; }
+  i=$((i+1)); [ "$i" -gt 120 ] && { echo "Zitadel API not reachable"; exit 1; }
   sleep 2
 done
 
-# JWKS immer aktualisieren (auch bei Re-Run / Key-Rotation)
+# Always refresh the JWKS (also on re-run / key rotation)
 curl -sf -H "$ZHOST" "$API/oauth/v2/keys" -o "$SHARED/jwks.json"
-echo "bootstrap: JWKS geschrieben."
+echo "bootstrap: JWKS written."
 
 if [ -f "$SHARED/bootstrap.done" ]; then
-  echo "bootstrap: bereits initialisiert (bootstrap.done) — nur JWKS erneuert."
+  echo "bootstrap: already initialised (bootstrap.done) — only refreshed JWKS."
   exit 0
 fi
 
@@ -49,11 +49,11 @@ api() { # METHOD PATH [BODY] [EXTRA_HEADER]
   fi
 }
 
-echo "bootstrap: lege Organisationen an ..."
-ORGA=$(api POST /v2/organizations '{"name":"Firma A"}' | jq -r '.organizationId')
-ORGB=$(api POST /v2/organizations '{"name":"Firma B"}' | jq -r '.organizationId')
-[ -n "$ORGA" ] && [ -n "$ORGB" ] || { echo "Org-Anlage fehlgeschlagen"; exit 1; }
-echo "  Firma A=$ORGA  Firma B=$ORGB"
+echo "bootstrap: creating organizations ..."
+ORGA=$(api POST /v2/organizations '{"name":"Company A"}' | jq -r '.organizationId')
+ORGB=$(api POST /v2/organizations '{"name":"Company B"}' | jq -r '.organizationId')
+[ -n "$ORGA" ] && [ -n "$ORGB" ] || { echo "org creation failed"; exit 1; }
+echo "  Company A=$ORGA  Company B=$ORGB"
 
 mk_user() { # orgid given family email  -> echoes userId
   body=$(jq -nc --arg g "$2" --arg f "$3" --arg e "$4" --arg p "$DEMO_USER_PASSWORD" \
@@ -61,14 +61,14 @@ mk_user() { # orgid given family email  -> echoes userId
   api POST /v2/users/human "$body" "x-zitadel-orgid: $1" | jq -r '.userId'
 }
 
-echo "bootstrap: lege Benutzer an ..."
+echo "bootstrap: creating users ..."
 ALICE=$(mk_user "$ORGA" Alice Staff    alice@a.demo)
 BOB=$(  mk_user "$ORGA" Bob   Customer bob@a.demo)
 CAROL=$(mk_user "$ORGB" Carol Staff    carol@b.demo)
 DAVE=$( mk_user "$ORGB" Dave  Customer dave@b.demo)
 echo "  alice=$ALICE bob=$BOB carol=$CAROL dave=$DAVE"
 
-echo "bootstrap: Projekt + OIDC-App (in Firma A) ..."
+echo "bootstrap: project + OIDC app (in Company A) ..."
 PROJ=$(api POST /management/v1/projects '{"name":"demo"}' "x-zitadel-orgid: $ORGA" | jq -r '.id')
 APPBODY=$(jq -nc --arg r "$LOGIN_ORIGIN/" --arg cb "$LOGIN_ORIGIN/callback" \
   '{name:"spa",
@@ -84,13 +84,13 @@ APPBODY=$(jq -nc --arg r "$LOGIN_ORIGIN/" --arg cb "$LOGIN_ORIGIN/callback" \
     idTokenRoleAssertion:true,
     idTokenUserinfoAssertion:true}')
 CLIENTID=$(api POST "/management/v1/projects/$PROJ/apps/oidc" "$APPBODY" "x-zitadel-orgid: $ORGA" | jq -r '.clientId')
-[ -n "$CLIENTID" ] && [ "$CLIENTID" != null ] || { echo "App-Anlage fehlgeschlagen"; exit 1; }
+[ -n "$CLIENTID" ] && [ "$CLIENTID" != null ] || { echo "app creation failed"; exit 1; }
 echo "  clientId=$CLIENTID"
 
-echo "bootstrap: Seed in Postgres (auth.* + Produkte) ..."
+echo "bootstrap: seeding Postgres (auth.* + products) ..."
 psql -v ON_ERROR_STOP=1 <<SQL
 INSERT INTO auth.organizations (zitadel_org_id, name) VALUES
-  ('$ORGA','Firma A'), ('$ORGB','Firma B')
+  ('$ORGA','Company A'), ('$ORGB','Company B')
 ON CONFLICT (zitadel_org_id) DO NOTHING;
 
 INSERT INTO auth.users (zitadel_sub, org_id, email) VALUES
@@ -115,7 +115,7 @@ INSERT INTO public.products (org_id, name, price)
   FROM (VALUES ('B-Sprocket',12.00),('B-Cog',7.75)) v(n,p);
 SQL
 
-echo "bootstrap: Runtime-Config (config.json) für die Angular-App schreiben ..."
+echo "bootstrap: writing runtime config (config.json) for the Angular app ..."
 cat > "$SHARED/config.json" <<EOF
 {
   "postgrest": { "url": "http://localhost:${POSTGREST_PORT:-3001}" },
@@ -127,11 +127,11 @@ cat > "$SHARED/config.json" <<EOF
   },
   "demo": {
     "password": "${DEMO_USER_PASSWORD}",
-    "users": ["alice@a.demo (Firma A·staff)", "bob@a.demo (Firma A·customer)",
-              "carol@b.demo (Firma B·staff)", "dave@b.demo (Firma B·customer)"]
+    "users": ["alice@a.demo (Company A staff)", "bob@a.demo (Company A customer)",
+              "carol@b.demo (Company B staff)", "dave@b.demo (Company B customer)"]
   }
 }
 EOF
 
 touch "$SHARED/bootstrap.done"
-echo "bootstrap: fertig."
+echo "bootstrap: done."

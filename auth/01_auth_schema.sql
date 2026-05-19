@@ -1,13 +1,13 @@
 -- ============================================================================
--- auth_schema.sql — Generischer Zitadel↔Postgres Identitäts-/RLS-Vertrag
+-- auth_schema.sql — Generic Zitadel<->Postgres identity / RLS contract
 -- ----------------------------------------------------------------------------
--- Single Source of Truth. Kennt NUR Zitadel-Org + -User. Rollen werden
--- DB-seitig in auth.user_roles vergeben (rollennamen-agnostisch).
--- Idempotent, ON_ERROR_STOP-fest (frisch UND wiederholt fehlerfrei).
+-- Single source of truth. Knows ONLY Zitadel org + user. Roles are assigned
+-- in the DB in auth.user_roles (role-name-agnostic).
+-- Idempotent, ON_ERROR_STOP-safe (clean AND repeated, error-free).
 --
--- PostgREST setzt aus dem (per JWKS/RS256 verifizierten) Zitadel-JWT die GUC
--- `request.jwt.claims`. Es gibt KEINE Zitadel-Action, KEIN nginx-Lua,
--- KEIN HMAC, KEIN Mint-Zeit-Resolver. Org/User entstehen Just-in-Time
+-- PostgREST sets the GUC `request.jwt.claims` from the (JWKS/RS256-verified)
+-- Zitadel JWT. There is NO Zitadel action, NO nginx-Lua, NO HMAC, NO
+-- mint-time resolver. Org/user are created just-in-time
 -- (auth.ensure_principal, via PGRST_DB_PRE_REQUEST).
 -- ============================================================================
 
@@ -15,7 +15,7 @@ CREATE SCHEMA IF NOT EXISTS auth;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid()
 
 -- ----------------------------------------------------------------------------
--- Anker-Tabellen (die einzigen DB-Brücken zu Zitadel)
+-- Anchor tables (the only DB bridges to Zitadel)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS auth.organizations (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
 );
 CREATE INDEX IF NOT EXISTS idx_auth_users_org ON auth.users(org_id);
 
--- Reiner Speicher. KEINE vordefinierten Rollennamen — die App definiert sie.
+-- Pure storage. NO predefined role names — the app defines them.
 CREATE TABLE IF NOT EXISTS auth.user_roles (
   user_id  uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role     text NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS auth.user_roles (
 );
 
 -- ----------------------------------------------------------------------------
--- Claim-Zugriff
+-- Claim access
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION auth._claims() RETURNS jsonb
   LANGUAGE sql STABLE PARALLEL SAFE AS $$
@@ -56,9 +56,9 @@ CREATE OR REPLACE FUNCTION auth.sub() RETURNS text
   SELECT auth._claims() ->> 'sub'
 $$;
 
--- Org-ID-Claim-Key ist konfigurierbar (Schritt-0-Ergebnis wird hier fixiert).
--- Standard: Zitadel-Reserved-Claims; mehrere Kandidaten werden gecoalesced,
--- damit das Beispiel ohne Vorab-Empirie läuft und in Phase B verschlankt wird.
+-- The org-id claim key is configurable (the step-0 result is fixed here).
+-- Default: Zitadel reserved claims; several candidates are coalesced so the
+-- example runs without prior empirical checks and can be trimmed in phase B.
 CREATE OR REPLACE FUNCTION auth._zitadel_org_id() RETURNS text
   LANGUAGE sql STABLE PARALLEL SAFE AS $$
   SELECT COALESCE(
@@ -69,9 +69,9 @@ CREATE OR REPLACE FUNCTION auth._zitadel_org_id() RETURNS text
 $$;
 
 -- ----------------------------------------------------------------------------
--- Just-in-Time-Spiegel — via PGRST_DB_PRE_REQUEST=auth.ensure_principal
--- SECURITY DEFINER: darf auth.* schreiben, obwohl Caller das nicht darf.
--- Vergibt KEINE Rollen (sicherer Default-Deny bis ein App-Admin zuweist).
+-- Just-in-time mirror — via PGRST_DB_PRE_REQUEST=auth.ensure_principal
+-- SECURITY DEFINER: may write auth.* even though the caller may not.
+-- Assigns NO roles (safe default-deny until an app admin assigns them).
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION auth.ensure_principal() RETURNS void
   LANGUAGE plpgsql SECURITY DEFINER SET search_path = auth, pg_temp AS $$
@@ -81,13 +81,13 @@ DECLARE
   v_org  uuid;
 BEGIN
   IF v_sub IS NULL OR v_oid IS NULL THEN
-    RETURN;  -- kein verifizierter Principal -> no-op
+    RETURN;  -- no verified principal -> no-op
   END IF;
 
-  -- PostgREST fährt GET in einer READ-ONLY-Transaktion (PGRST_DB_PRE_REQUEST
-  -- läuft trotzdem mit). Schreiben ist dort unmöglich -> still no-op. Der
-  -- Login-Client ruft public.ensure_principal() einmalig per POST (schreibbar)
-  -- auf; spätestens der erste Schreib-Request legt den Principal sonst an.
+  -- PostgREST runs GET in a READ-ONLY transaction (PGRST_DB_PRE_REQUEST still
+  -- runs). Writing is impossible there -> stay a no-op. The login client calls
+  -- public.ensure_principal() once via POST (writable); otherwise the first
+  -- write request creates the principal.
   IF current_setting('transaction_read_only') = 'on' THEN
     RETURN;
   END IF;
@@ -102,13 +102,13 @@ BEGIN
   VALUES (v_sub, v_org, auth._claims() ->> 'email')
   ON CONFLICT (zitadel_sub) DO UPDATE
     SET email = COALESCE(EXCLUDED.email, auth.users.email);
-  -- id bleibt stabil; org_id wird bewusst NICHT umgeschrieben.
+  -- id stays stable; org_id is deliberately NOT rewritten.
 END;
 $$;
 
 -- ----------------------------------------------------------------------------
--- STABLE-Accessoren (1 indizierter Lookup; SECURITY DEFINER liest auth.*)
--- Vertrag wird AUSSCHLIESSLICH hier geändert.
+-- STABLE accessors (1 indexed lookup; SECURITY DEFINER reads auth.*)
+-- The contract is changed EXCLUSIVELY here.
 -- ----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION auth.user_id() RETURNS uuid
   LANGUAGE sql STABLE SECURITY DEFINER SET search_path = auth, pg_temp AS $$
@@ -136,7 +136,7 @@ CREATE OR REPLACE FUNCTION auth.has_role(p_role text) RETURNS boolean
   )
 $$;
 
--- Frontend-Profil-Quelle (statt Custom-Claims).
+-- Frontend profile source (instead of custom claims).
 CREATE OR REPLACE FUNCTION public.whoami() RETURNS jsonb
   LANGUAGE sql STABLE AS $$
   SELECT jsonb_build_object(
@@ -146,9 +146,9 @@ CREATE OR REPLACE FUNCTION public.whoami() RETURNS jsonb
   )
 $$;
 
--- VOLATILE-Wrapper, von PostgREST als POST /rpc/ensure_principal exponiert.
--- Der Login-Client ruft dies einmal direkt nach dem Login auf (schreibbare
--- Transaktion) -> JIT-Spiegel sicher angelegt, auch wenn nur GETs folgen.
+-- VOLATILE wrapper, exposed by PostgREST as POST /rpc/ensure_principal.
+-- The login client calls this once right after login (writable
+-- transaction) -> JIT mirror reliably created, even if only GETs follow.
 CREATE OR REPLACE FUNCTION public.ensure_principal() RETURNS jsonb
   LANGUAGE sql VOLATILE AS $$
   SELECT auth.ensure_principal();
@@ -156,9 +156,9 @@ CREATE OR REPLACE FUNCTION public.ensure_principal() RETURNS jsonb
 $$;
 
 -- ----------------------------------------------------------------------------
--- Grants: die PostgREST-DB-Rolle (web_user, siehe 00_roles.sql) darf NUR via
--- Funktionen an auth.* heran. Tabellen ohne direkten Zugriff; SECURITY DEFINER
--- kapselt sie. Autorisierung passiert 100% in RLS via auth.*.
+-- Grants: the PostgREST DB role (web_user, see 00_roles.sql) may reach auth.*
+-- ONLY via functions. Tables have no direct access; SECURITY DEFINER
+-- encapsulates them. Authorization happens 100% in RLS via auth.*.
 -- ----------------------------------------------------------------------------
 GRANT USAGE ON SCHEMA auth TO web_user;
 GRANT EXECUTE ON FUNCTION

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Minimaler statischer SPA-Server: unbekannte Pfade -> index.html
-# (damit /callback Deep-Links der Angular-Routen funktionieren).
+# Minimal static SPA server: unknown paths -> index.html
+# (so /callback deep-links of the Angular routes work).
 import http.server, os, socketserver
 
 ROOT = "/site"
@@ -11,8 +11,8 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         p = self.path.split("?", 1)[0]
         fp = os.path.join(ROOT, p.lstrip("/"))
-        # SPA-Fallback NUR für Routen (kein Dateiname mit Endung). Fehlende
-        # Assets/config.json liefern ehrliches 404 statt index.html.
+        # SPA fallback ONLY for routes (no filename with extension). Missing
+        # assets/config.json return an honest 404 instead of index.html.
         if p != "/" and not os.path.isfile(fp) and "." not in os.path.basename(p):
             self.path = "/index.html"
         return super().do_GET()

@@ -1,8 +1,8 @@
 # =============================================================================
-# zitadel-pgrst-auth — reproduzierbares Deliverable
-# `docker compose up` -> Postgres+auth-Schema, Zitadel (Bootstrap: 2 Firmen,
-# staff/customer-User, OIDC-App), PostgREST (JWKS/RS256), statischer Login.
-# Definition of Done: Login funktioniert, Mandantentrennung sichtbar.
+# zitadel-pgrst-auth — reproducible deliverable
+# `docker compose up` -> Postgres+auth schema, Zitadel (bootstrap: 2 companies,
+# staff/customer users, OIDC app), PostgREST (JWKS/RS256), Angular app.
+# Definition of Done: login works, tenant isolation visible.
 # =============================================================================
 services:
   postgres:
@@ -29,8 +29,8 @@ services:
 
   zitadel:
     image: ghcr.io/zitadel/zitadel:${ZITADEL_VERSION:-latest}
-    # Demo: als root, damit die FirstInstance-PAT ins frische Named-Volume
-    # /bootstrap geschrieben werden kann (sonst "permission denied").
+    # Demo: run as root so the FirstInstance PAT can be written into the
+    # fresh named volume /bootstrap (otherwise "permission denied").
     user: "0:0"
     restart: unless-stopped
     command: >
@@ -111,7 +111,7 @@ services:
       bootstrap:
         condition: service_completed_successfully
 
-  # Angular-Beispiel-App auf dem generischen Auth-Baustein (src/auth).
+  # Angular example app built on the generic auth building block (src/auth).
   web:
     build:
       context: .

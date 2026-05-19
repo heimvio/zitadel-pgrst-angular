@@ -1,6 +1,6 @@
-# Build der Beispiel-App. Build-Context = Repo-Root, damit der generische
-# Kern-Baustein angular-auth/ eingebunden werden kann, OHNE Importpfade zu
-# ändern: er wird als src/auth/ rekonstruiert (App importiert './auth').
+# Build of the example app. Build context = repo root so the generic core
+# building block angular-auth/ can be included WITHOUT changing import paths:
+# it is reconstructed as src/auth/ (the app imports './auth').
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY examples/products/web/package.json ./
@@ -10,7 +10,7 @@ COPY examples/products/web/src ./src
 COPY angular-auth ./src/auth
 RUN npx ng build
 
-# Statisch serviert; config.json kommt zur Laufzeit aus dem shared-Volume.
+# Served statically; config.json comes at runtime from the shared volume.
 FROM python:3-alpine
 COPY --from=build /app/dist/browser /site
 COPY examples/products/web/serve.py /serve.py

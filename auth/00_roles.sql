@@ -1,16 +1,15 @@
 -- ============================================================================
--- 00_roles.sql — PostgREST-Rollenmodell (Basis, generisch)
+-- 00_roles.sql — PostgREST role model (core, generic)
 -- ----------------------------------------------------------------------------
--- Bewusst minimal: EINE effektive Rolle `web_user`. PostgREST verbindet als
--- Login-Rolle `authenticator` und nutzt `web_user` als DB-Anon-Rolle für jeden
--- Request. Es gibt KEINEN Rollen-Claim und KEINE Zitadel-Action — die gesamte
--- Autorisierung läuft über RLS + auth.* (DB-seitig vergebene Rollen in
--- auth.user_roles). Unterscheidung "eingeloggt vs. nicht" ergibt sich aus dem
--- (per JWKS verifizierten) JWT: ohne gültige Claims liefern auth.* NULL ->
--- RLS verweigert (Default-Deny).
+-- Deliberately minimal: ONE effective role `web_user`. PostgREST connects as
+-- login role `authenticator` and uses `web_user` as the DB anon role for every
+-- request. There is NO role claim and NO Zitadel action — all authorization
+-- runs through RLS + auth.* (roles assigned in the DB in auth.user_roles).
+-- "logged in vs. not" follows from the (JWKS-verified) JWT: without valid
+-- claims auth.* returns NULL -> RLS denies (default-deny).
 --
--- Passwort der Login-Rolle kommt als psql-Variable :authpw (vom Orchestrator
--- init.sh per -v gesetzt). Idempotent.
+-- The login role's password is passed as the psql variable :authpw (set by
+-- the orchestrator init.sh via -v). Idempotent.
 -- ============================================================================
 
 DO $$
@@ -23,7 +22,7 @@ BEGIN
   END IF;
 END$$;
 
--- Passwort setzen (idempotent; Quelle = Umgebungsvariable)
+-- Set the password (idempotent; source = environment variable)
 SELECT format('ALTER ROLE authenticator PASSWORD %L', :'authpw')
 \gexec
 

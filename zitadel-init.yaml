@@ -1,6 +1,6 @@
-# ZITADEL FirstInstance — nur beim Erst-Bootstrap geladen (--steps).
-# Erzeugt Instanz-Admin + eine Maschinen-User-PAT, die der bootstrap-Service
-# nutzt, um Orgs/Projekt/OIDC-App/User idempotent via API anzulegen.
+# ZITADEL FirstInstance — loaded only on the very first bootstrap (--steps).
+# Creates the instance admin + a machine-user PAT that the bootstrap service
+# uses to create orgs/project/OIDC-app/users idempotently via the API.
 FirstInstance:
   PatPath: /bootstrap/admin-client.pat
   Org:

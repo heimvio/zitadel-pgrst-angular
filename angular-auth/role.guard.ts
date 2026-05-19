@@ -3,7 +3,7 @@ import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from './auth.service';
 
 /**
- * Auth-Guard: nur eingeloggt. Sonst OIDC-Login starten.
+ * Auth guard: logged in only. Otherwise start the OIDC login.
  */
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
@@ -13,9 +13,9 @@ export const authGuard: CanActivateFn = () => {
 };
 
 /**
- * Rollen-Guard-Fabrik (rollennamen-agnostisch, case-insensitive).
- * Server-RLS bleibt die echte Durchsetzung — das hier ist nur UX/Defense-in-Depth.
- * `fallback` = Route bei fehlender Rolle (Default '/').
+ * Role guard factory (role-name-agnostic, case-insensitive).
+ * Server-side RLS remains the real enforcement — this is only UX/defense-in-depth.
+ * `fallback` = route when the role is missing (default '/').
  *
  * Usage: `canActivate: [authGuard, roleGuard(['staff'])]`
  */
