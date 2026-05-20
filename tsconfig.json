@@ -1,0 +1,32 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": ".",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "paths": {
+      "@proxvex/zitadel-pgrst-auth-angular": ["projects/zitadel-pgrst-auth-angular/src/public-api.ts"],
+      "@proxvex/zitadel-pgrst-auth-angular/auth": ["projects/zitadel-pgrst-auth-angular/auth/public-api.ts"],
+      "@proxvex/zitadel-pgrst-auth-angular/provisioning": ["projects/zitadel-pgrst-auth-angular/provisioning/public-api.ts"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    { "path": "./projects/zitadel-pgrst-auth-angular/tsconfig.lib.json" }
+  ]
+}

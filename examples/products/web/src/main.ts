@@ -2,7 +2,8 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { provideAuth } from './auth';
+import { provideAuth } from '@proxvex/zitadel-pgrst-auth-angular/auth';
+import { provideProvisioning } from '@proxvex/zitadel-pgrst-auth-angular/provisioning';
 import { routes } from './app/app.routes';
 
 @Component({
@@ -14,5 +15,11 @@ import { routes } from './app/app.routes';
 export class AppComponent {}
 
 bootstrapApplication(AppComponent, {
-  providers: [provideRouter(routes), provideAuth()]
+  providers: [
+    provideRouter(routes),
+    provideAuth(),
+    provideProvisioning({
+      rolesCatalog: ['staff', 'customer', 'org_owner', 'iam_org_owner']
+    })
+  ]
 }).catch(err => console.error(err));

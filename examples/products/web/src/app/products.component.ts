@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService, runtimeConfig } from '../auth';
+import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/auth';
 
 interface Product { name: string; price: number; }
 
@@ -53,7 +53,7 @@ interface Product { name: string; price: number; }
   `
 })
 export class ProductsComponent {
-  auth = inject(AuthService);
+  auth: AuthService = inject(AuthService);
   private http = inject(HttpClient);
   private base = runtimeConfig.postgrest.url;
 

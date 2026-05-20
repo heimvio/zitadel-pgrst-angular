@@ -1,26 +1,29 @@
 {
-  "name": "zitadel-pgrst-auth-angular",
+  "name": "zitadel-pgrst-auth-products-example",
   "version": "0.1.0",
   "private": true,
+  "description": "Reference Angular app showing how to consume @proxvex/zitadel-pgrst-auth-angular (auth + provisioning).",
   "scripts": {
-    "build": "ng build --configuration production"
+    "build": "ng build --configuration production",
+    "start": "ng serve"
   },
   "dependencies": {
-    "@angular/common": "^18.2.0",
-    "@angular/compiler": "^18.2.0",
-    "@angular/core": "^18.2.0",
-    "@angular/forms": "^18.2.0",
-    "@angular/platform-browser": "^18.2.0",
-    "@angular/router": "^18.2.0",
-    "angular-oauth2-oidc": "^17.0.2",
+    "@angular/common": "^21.1.0",
+    "@angular/compiler": "^21.1.0",
+    "@angular/core": "^21.1.0",
+    "@angular/forms": "^21.1.0",
+    "@angular/platform-browser": "^21.1.0",
+    "@angular/router": "^21.1.0",
+    "@proxvex/zitadel-pgrst-auth-angular": "file:../../../dist/zitadel-pgrst-auth-angular",
+    "angular-oauth2-oidc": "^20.0.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.6.0",
-    "zone.js": "~0.14.10"
+    "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@angular/build": "^18.2.0",
-    "@angular/cli": "^18.2.0",
-    "@angular/compiler-cli": "^18.2.0",
-    "typescript": "~5.5.4"
+    "@angular/build": "^21.1.1",
+    "@angular/cli": "^21.1.1",
+    "@angular/compiler-cli": "^21.1.0",
+    "typescript": "~5.9.2"
   }
 }

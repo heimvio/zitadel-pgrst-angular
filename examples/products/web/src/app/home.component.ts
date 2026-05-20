@@ -1,20 +1,29 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../auth';
+import { RouterLink } from '@angular/router';
+import { AuthService } from '@proxvex/zitadel-pgrst-auth-angular/auth';
 import { ProductsComponent } from './products.component';
 
 /**
  * Landing page. Not logged in -> title + Login button + demo users.
- * Logged in -> the products example. No auto-redirect, so the app is
- * always visible (the OIDC redirect happens only on the Login click).
+ * Logged in -> the products example + an admin shortcut for org/iam owners.
  */
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, ProductsComponent],
+  imports: [CommonModule, RouterLink, ProductsComponent],
   template: `
     <ng-container *ngIf="auth.ready(); else loading">
       <ng-container *ngIf="auth.isAuthenticated(); else landing">
+        <nav class="muted">
+          <a routerLink="/">Products</a>
+          @if (auth.hasRole('org_owner')) {
+            · <a routerLink="/admin/users">Manage users</a>
+          }
+          @if (auth.hasRole('iam_org_owner')) {
+            · <a routerLink="/admin/orgs">Manage orgs</a>
+          }
+        </nav>
         <app-products></app-products>
       </ng-container>
     </ng-container>
@@ -37,7 +46,7 @@ import { ProductsComponent } from './products.component';
   `
 })
 export class HomeComponent {
-  auth = inject(AuthService);
+  auth: AuthService = inject(AuthService);
   demo = signal<{ password: string; users: string[] } | null>(null);
 
   constructor() {

@@ -50,6 +50,11 @@ export class AuthService {
   isAuthenticated(): boolean { return this.oauth.hasValidAccessToken(); }
   refresh() { return this.oauth.refreshToken(); }
 
+  /** Identity claims from the current ID token (null if not logged in). */
+  claims<T = Record<string, unknown>>(): T | null {
+    return (this.oauth.getIdentityClaims() as T | null) ?? null;
+  }
+
   roles(): string[] { return this.profile()?.roles ?? []; }
   hasRole(r: string): boolean {
     return this.roles().map(x => x.toLowerCase()).includes(r.toLowerCase());

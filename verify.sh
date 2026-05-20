@@ -62,3 +62,33 @@ echo "### Role gating (INSERT)"
 echo "svc-a (staff) POST /products: HTTP $(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TA" -H "$J" -X POST "$PGRST/products" -d '{"name":"A-New","price":1.23}')  (expected 201)"
 echo "svc-b (customer) POST /products: HTTP $(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TB" -H "$J" -X POST "$PGRST/products" -d '{"name":"B-Hack","price":9.99}')  (expected 401/403/4xx)"
 echo "svc-a after insert: $(GB "$TA" '/products?select=name&order=name')"
+
+echo
+echo "### Provisioning RPCs — gating + org scope"
+# svc-a is currently only 'staff'. provision_user must refuse.
+PR_NOAUTH=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TA" -H "$J" \
+  -X POST "$PGRST/rpc/provision_user" \
+  -d '{"p_zitadel_sub":"verify-fake-1","p_email":"reject@a.demo","p_roles":["customer"]}')
+echo "svc-a (no org_owner) provision_user: HTTP $PR_NOAUTH  (expected 403)"
+
+# Promote svc-a to org_owner and retry.
+$PSQL -c "INSERT INTO auth.user_roles(user_id,role) SELECT id,'org_owner' FROM auth.users WHERE zitadel_sub='$UA' ON CONFLICT DO NOTHING;"
+NEW_SUB="verify-fake-$(date +%s)"
+PR_OK=$(curl -s -H "Authorization: Bearer $TA" -H "$J" \
+  -X POST "$PGRST/rpc/provision_user" \
+  -d "$(jq -nc --arg s "$NEW_SUB" '{p_zitadel_sub:$s,p_email:"verified@a.demo",p_roles:["customer"]}')")
+echo "svc-a (org_owner) provision_user response: $PR_OK"
+
+echo "list_org_users (svc-a):"
+curl -s -H "Authorization: Bearer $TA" -H "$J" -X POST "$PGRST/rpc/list_org_users" -d '{}' | jq
+
+# Cross-org guard: svc-a tries to remove svc-b (Company B).
+PR_CROSS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TA" -H "$J" \
+  -X POST "$PGRST/rpc/remove_user" \
+  -d "$(jq -nc --arg id "$UB" '{p_user_id:(null)}')")
+# We need svc-b's DB UUID (not Zitadel sub) for remove_user; look it up:
+UB_DB=$($PSQL -c "SELECT id FROM auth.users WHERE zitadel_sub='$UB'" | head -n1)
+PR_CROSS=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TA" -H "$J" \
+  -X POST "$PGRST/rpc/remove_user" \
+  -d "$(jq -nc --arg id "$UB_DB" '{p_user_id:$id}')")
+echo "svc-a tries to remove svc-b (cross-org): HTTP $PR_CROSS  (expected 4xx)"

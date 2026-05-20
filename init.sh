@@ -8,7 +8,7 @@ set -eu
 : "${AUTHENTICATOR_PASSWORD:?AUTHENTICATOR_PASSWORD must be set}"
 
 # Order: generic CORE (auth/) first, then the example app (example/).
-for f in /sql/auth/00_roles.sql /sql/auth/01_auth_schema.sql /sql/example/02_products.sql; do
+for f in /sql/auth/00_roles.sql /sql/auth/01_auth_schema.sql /sql/auth/02_provisioning.sql /sql/example/02_products.sql; do
   echo "init.sh: applying $f"
   psql -v ON_ERROR_STOP=1 \
        -v authpw="$AUTHENTICATOR_PASSWORD" \
