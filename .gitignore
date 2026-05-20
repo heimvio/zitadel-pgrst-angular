@@ -1,6 +1,9 @@
 *.pat
 .DS_Store
 dist/
+.e2e-mode
+playwright-report/
+test-results/
 
 # never check in node_modules anywhere in the workspace (root or any example app)
 node_modules/

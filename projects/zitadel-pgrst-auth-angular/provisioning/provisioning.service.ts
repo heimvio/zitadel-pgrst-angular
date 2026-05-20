@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/auth';
 import { ZitadelAdminService } from './zitadel-admin.service';
-import { PROVISIONING_CONFIG } from './provisioning-config';
+import { PROVISIONING_CONFIG, ProvisioningConfig } from './provisioning-config';
 
 export interface OrgUser {
   id: string;
@@ -34,10 +34,12 @@ export interface ProvisionedUser {
  */
 @Injectable({ providedIn: 'root' })
 export class ProvisioningService {
-  private http = inject(HttpClient);
-  private auth = inject(AuthService);
-  private zitadel = inject(ZitadelAdminService);
-  private cfg = inject(PROVISIONING_CONFIG);
+  constructor(
+    private http: HttpClient,
+    private auth: AuthService,
+    private zitadel: ZitadelAdminService,
+    @Inject(PROVISIONING_CONFIG) private cfg: Required<ProvisioningConfig>
+  ) {}
 
   private get pgrst(): string {
     return (runtimeConfig.postgrest.url || '').replace(/\/$/, '');

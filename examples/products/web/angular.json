@@ -19,7 +19,8 @@
             "styles": ["src/styles.css"]
           },
           "configurations": {
-            "production": { "optimization": true, "outputHashing": "none" }
+            "production": { "optimization": true, "outputHashing": "none" },
+            "development": { "optimization": false, "sourceMap": true, "outputHashing": "none", "extractLicenses": false }
           },
           "defaultConfiguration": "production"
         }

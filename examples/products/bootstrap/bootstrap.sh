@@ -79,6 +79,17 @@ CAROL=$(mk_user "$ORGB" Carol Staff    carol@b.demo)
 DAVE=$( mk_user "$ORGB" Dave  Customer dave@b.demo)
 echo "  alice=$ALICE bob=$BOB carol=$CAROL dave=$DAVE"
 
+echo "bootstrap: granting Zitadel ORG_OWNER membership to alice + carol ..."
+add_org_owner() { # orgid userid
+  api POST /management/v1/orgs/me/members \
+    "$(jq -nc --arg u "$2" '{userId:$u, roles:["ORG_OWNER"]}')" \
+    "x-zitadel-orgid: $1" >/dev/null \
+    && echo "  ✓ $2 is ORG_OWNER in $1" \
+    || echo "  · already ORG_OWNER (or other 4xx) for $2 in $1"
+}
+add_org_owner "$ORGA" "$ALICE"
+add_org_owner "$ORGB" "$CAROL"
+
 echo "bootstrap: project + OIDC app (in Company A) ..."
 PROJ=$(api POST /management/v1/projects '{"name":"demo"}' "x-zitadel-orgid: $ORGA" | jq -r '.id')
 APPBODY=$(jq -nc --arg r "$LOGIN_ORIGIN/" --arg cb "$LOGIN_ORIGIN/callback" \
@@ -117,6 +128,11 @@ ON CONFLICT DO NOTHING;
 INSERT INTO auth.user_roles (user_id, role)
   SELECT id,'customer' FROM auth.users WHERE zitadel_sub IN ('$BOB','$DAVE')
 ON CONFLICT DO NOTHING;
+-- org_owner for alice + carol so each Company has an admin who can
+-- exercise the provisioning UI (/admin/users) in the demo + e2e tests.
+INSERT INTO auth.user_roles (user_id, role)
+  SELECT id,'org_owner' FROM auth.users WHERE zitadel_sub IN ('$ALICE','$CAROL')
+ON CONFLICT DO NOTHING;
 
 INSERT INTO public.products (org_id, name, price)
   SELECT (SELECT id FROM auth.organizations WHERE zitadel_org_id='$ORGA'), n, p
@@ -134,12 +150,12 @@ cat > "$SHARED/config.json" <<EOF
     "issuer": "${ZITADEL_ISSUER}",
     "clientId": "${CLIENTID}",
     "redirectPath": "/callback",
-    "scope": "openid profile email urn:zitadel:iam:user:resourceowner"
+    "scope": "openid profile email urn:zitadel:iam:user:resourceowner urn:zitadel:iam:org:project:id:zitadel:aud"
   },
   "demo": {
     "password": "${DEMO_USER_PASSWORD}",
-    "users": ["alice@a.demo (Company A staff)", "bob@a.demo (Company A customer)",
-              "carol@b.demo (Company B staff)", "dave@b.demo (Company B customer)"]
+    "users": ["alice@a.demo (Company A staff + org_owner)", "bob@a.demo (Company A customer)",
+              "carol@b.demo (Company B staff + org_owner)", "dave@b.demo (Company B customer)"]
   }
 }
 EOF

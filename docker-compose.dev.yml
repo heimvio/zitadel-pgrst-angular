@@ -1,0 +1,20 @@
+# Dev-mode overlay: do NOT build the web image inside Docker. Instead, mount
+# the host-built dist/ via a bind-volume so changes show up after a local
+# `npm run build:lib` + `npm run build` without any docker rebuild.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# or, via the wrapper:
+#   scripts/e2e.sh dev
+#
+# Prereq before `up`: the host dist/ exists. Run scripts/e2e.sh build first
+# (or `npm run build:lib && (cd examples/products/web && npm install && npm run build)`).
+services:
+  web:
+    image: python:3-alpine
+    build: !reset null
+    volumes:
+      - shared:/shared:ro
+      - ./examples/products/web/dist/browser:/site:ro
+      - ./examples/products/web/serve.py:/serve.py:ro
+    command: ["sh","-c","cp /shared/config.json /site/config.json 2>/dev/null || true; exec python /serve.py"]

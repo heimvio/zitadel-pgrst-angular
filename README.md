@@ -159,6 +159,39 @@ Identity lives in **Zitadel** (orgs, users, OIDC, MFA). On every request, **Post
 | Headless verification   | [`verify.sh`](verify.sh)                                          |
 | Extending conventions   | [`EXTENDING.md`](EXTENDING.md)                                    |
 
-## Headless verification
+## Verification
 
-`verify.sh` proves the full chain (Zitadel JWT → PostgREST JWKS verify → JIT → RLS → provisioning) without a browser. See the script for invocation details.
+Two layers, both runnable against the same `docker compose up -d` stack.
+
+**1. Headless backend** — [`verify.sh`](verify.sh) drives the full chain (real Zitadel JWT → PostgREST JWKS verify → JIT → RLS → provisioning RPCs) with `curl`. No browser, no UI, ~10 seconds.
+
+```bash
+docker run --rm --network zitadel-pgrst-auth_default \
+  -v zitadel-pgrst-auth_zbootstrap:/bootstrap:ro \
+  -v "$PWD/verify.sh:/verify.sh:ro" alpine:3.20 sh /verify.sh
+```
+
+**2. Browser E2E** — Playwright drives the real OIDC flow (Zitadel hosted login UI), tenant isolation, and the provisioning admin UI. See [`e2e/README.md`](e2e/README.md) for the spec catalog and [`scripts/e2e.sh`](scripts/e2e.sh) for the workflow wrapper.
+
+```bash
+scripts/e2e.sh dev    # one-off: builds lib + app, starts stack in dev mode, waits for bootstrap
+scripts/e2e.sh test   # runs the suite (8 specs, ~1 min)
+```
+
+For tight iteration without re-bootstrapping Zitadel:
+
+```bash
+scripts/e2e.sh iter      # rebuilds lib + app on host, runs tests (web is bind-mounted)
+scripts/e2e.sh reapply   # re-applies 01_auth_schema.sql + 02_provisioning.sql into the live DB
+                         # (works because every fn uses CREATE OR REPLACE)
+scripts/e2e.sh reset     # destructive: down -v + up (only when you change anchor schema/DDL)
+```
+
+Two modes:
+
+| Mode    | Web container             | Use when                                          |
+| ------- | ------------------------- | ------------------------------------------------- |
+| `up`    | built inside Docker       | mirroring production / CI                         |
+| `dev`   | bind-mount on host `dist/`| iterating locally — changes show up after `iter`  |
+
+The E2E suite is the safety net for library changes — if it stays green, your `auth` + `provisioning` building blocks survive the round-trip Zitadel → SPA → PostgREST → RLS.

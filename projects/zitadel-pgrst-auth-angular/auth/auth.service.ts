@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { OAuthService, AuthConfig } from 'angular-oauth2-oidc';
 import { runtimeConfig } from './runtime-config';
 
@@ -18,10 +18,10 @@ export interface Profile {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private oauth = inject(OAuthService);
-
   readonly profile = signal<Profile | null>(null);
   readonly ready = signal<boolean>(false);
+
+  constructor(private oauth: OAuthService) {}
 
   /** Called by the APP_INITIALIZER: configure OIDC + finish the code flow. */
   async init(): Promise<void> {

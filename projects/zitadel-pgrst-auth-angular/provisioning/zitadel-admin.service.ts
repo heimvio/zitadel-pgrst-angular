@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/auth';
@@ -22,8 +22,7 @@ import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/
  */
 @Injectable({ providedIn: 'root' })
 export class ZitadelAdminService {
-  private http = inject(HttpClient);
-  private auth = inject(AuthService);
+  constructor(private http: HttpClient, private auth: AuthService) {}
 
   private get base(): string {
     return (runtimeConfig.oidc.issuer || '').replace(/\/$/, '');
@@ -46,11 +45,14 @@ export class ZitadelAdminService {
   }
 
   async createHumanUser(orgId: string, p: { givenName: string; familyName: string; email: string }): Promise<string> {
+    // verification is a Zitadel oneof — set EITHER sendCode (invite mail) OR
+    // isVerified. We pick sendCode so the new user gets an email invite and
+    // sets their own password.
     const res = await firstValueFrom(this.http.post<{ userId: string }>(
       `${this.base}/v2/users/human`,
       {
         profile: { givenName: p.givenName, familyName: p.familyName },
-        email: { email: p.email, isVerified: false, sendCode: {} }
+        email: { email: p.email, sendCode: {} }
       },
       { headers: this.headers(orgId) }));
     return res.userId;

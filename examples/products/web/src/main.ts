@@ -17,7 +17,7 @@ export class AppComponent {}
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
-    provideAuth(),
+    ...provideAuth(),
     provideProvisioning({
       rolesCatalog: ['staff', 'customer', 'org_owner', 'iam_org_owner']
     })
