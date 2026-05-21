@@ -6,11 +6,12 @@ a **per-organization product list** with two app-defined roles —
 isolation and role gating end to end.
 
 This is exactly what the repository-root `docker compose` brings up. The
-compose file, `init.sh` and `.env` live at the repo root; this folder holds the
+compose file and `.env` live at the repo root; the base bootstrap that
+creates the DB schema is at [`../../bootstrap/`](../../bootstrap/); this
+folder holds the
 example-specific parts:
 
 - `db/02_products.sql` — the `products` table + RLS policies.
-- `web/` — the Angular app (includes `angular-auth/` as `src/auth/` at build).
 - `bootstrap/bootstrap.sh` — idempotent Zitadel + DB seed; writes the app's
   runtime `config.json`.
 
@@ -39,11 +40,11 @@ answers once the stack is up.
 
 Then open <http://localhost:8089> and log in with a demo user:
 
-| Login | Password | Role |
-|---|---|---|
-| `alice@a.demo` | `Demo1!Pass` | Company A · staff |
+| Login          | Password     | Role                 |
+| -------------- | ------------ | -------------------- |
+| `alice@a.demo` | `Demo1!Pass` | Company A · staff    |
 | `bob@a.demo`   | `Demo1!Pass` | Company A · customer |
-| `carol@b.demo` | `Demo1!Pass` | Company B · staff |
+| `carol@b.demo` | `Demo1!Pass` | Company B · staff    |
 | `dave@b.demo`  | `Demo1!Pass` | Company B · customer |
 
 Expected:
@@ -68,12 +69,12 @@ applies to `bootstrap/` (idempotent via `bootstrap.done`).
 
 Default ports (override in the repo-root `.env`):
 
-| Service | URL |
-|---|---|
+| Service     | URL                     |
+| ----------- | ----------------------- |
 | Angular app | <http://localhost:8089> |
-| PostgREST | <http://localhost:3001> |
-| Zitadel | <http://localhost:8090> |
-| Postgres | `localhost:55433` |
+| PostgREST   | <http://localhost:3001> |
+| Zitadel     | <http://localhost:8090> |
+| Postgres    | `localhost:55433`       |
 
 ## Headless verification (no browser)
 

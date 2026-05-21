@@ -56,6 +56,20 @@ BEGIN
 END;
 $$;
 
+-- Role assignment (assign/revoke) is allowed for ORG admins OR IAM admins.
+-- User creation stays org-admin-only (auth._require_org_admin in provision_user).
+CREATE OR REPLACE FUNCTION auth._require_role_admin() RETURNS void
+  LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = auth, pg_temp AS $$
+BEGIN
+  IF NOT (auth.has_role(auth.org_admin_role())
+          OR auth.has_role(auth.iam_admin_role())) THEN
+    RAISE EXCEPTION 'forbidden: % or % role required',
+      auth.org_admin_role(), auth.iam_admin_role()
+      USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
 -- ----------------------------------------------------------------------------
 -- Org provisioning — IAM-level (creating new tenant orgs)
 -- ----------------------------------------------------------------------------
@@ -138,7 +152,7 @@ CREATE OR REPLACE FUNCTION auth.assign_role(p_user_id uuid, p_role text)
 DECLARE
   v_target_org uuid;
 BEGIN
-  PERFORM auth._require_org_admin();
+  PERFORM auth._require_role_admin();
 
   IF p_role IS NULL OR p_role = '' THEN
     RAISE EXCEPTION 'p_role required' USING ERRCODE = '22023';
@@ -164,7 +178,7 @@ CREATE OR REPLACE FUNCTION auth.revoke_role(p_user_id uuid, p_role text)
 DECLARE
   v_target_org uuid;
 BEGIN
-  PERFORM auth._require_org_admin();
+  PERFORM auth._require_role_admin();
 
   SELECT org_id INTO v_target_org FROM auth.users WHERE id = p_user_id;
   IF v_target_org IS NULL THEN
@@ -271,6 +285,7 @@ GRANT EXECUTE ON FUNCTION
   auth.iam_admin_role(),
   auth._require_org_admin(),
   auth._require_iam_admin(),
+  auth._require_role_admin(),
   auth.provision_org(text, text),
   auth.provision_user(text, text, text[]),
   auth.assign_role(uuid, text),

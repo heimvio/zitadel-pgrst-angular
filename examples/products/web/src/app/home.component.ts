@@ -20,9 +20,6 @@ import { ProductsComponent } from './products.component';
           @if (auth.hasRole('org_owner')) {
             · <a routerLink="/admin/users">Manage users</a>
           }
-          @if (auth.hasRole('iam_org_owner')) {
-            · <a routerLink="/admin/orgs">Manage orgs</a>
-          }
         </nav>
         <app-products></app-products>
       </ng-container>

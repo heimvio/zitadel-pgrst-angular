@@ -12,7 +12,6 @@ Each example is the reference/copy template for building your own app.
 There is **no `docker-compose.yml` inside `examples/`** — by design the single
 compose stack lives at the **repository root** (it wires Postgres, Zitadel, the
 bootstrap, PostgREST and the example web app together). Start it from the
-repository root:
 
 ```bash
 git clone <this-repo> zitadel-pgrst-auth
@@ -23,7 +22,6 @@ docker compose up
 (If you already have the repo: `cd` into its root — the folder with
 `docker-compose.yml` — and run `docker compose up`.)
 
-First start takes a minute or two (Zitadel initialises, then the bootstrap
 seeds orgs/users/products). A second `docker compose up` is idempotent.
 
 Then open <http://localhost:8089> and log in with a demo user, e.g.

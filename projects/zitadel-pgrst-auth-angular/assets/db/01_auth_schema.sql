@@ -15,6 +15,15 @@ CREATE SCHEMA IF NOT EXISTS auth;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- gen_random_uuid()
 
 -- ----------------------------------------------------------------------------
+-- Migration tracking (used by base.sh's migrations runner). Shared by lib AND
+-- app migrations — one source of truth per database.
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS auth.schema_migrations (
+  version    text PRIMARY KEY,
+  applied_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- ----------------------------------------------------------------------------
 -- Anchor tables (the only DB bridges to Zitadel)
 -- ----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS auth.organizations (

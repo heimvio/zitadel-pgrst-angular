@@ -16,9 +16,6 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./projects/zitadel-pgrst-auth-angular/assets/db:/sql/auth:ro
-      - ./examples/products/db:/sql/example:ro
-      - ./init.sh:/docker-entrypoint-initdb.d/00_init.sh:ro
     ports:
       - "${POSTGRES_PORT:-55433}:5432"
     healthcheck:
@@ -69,7 +66,7 @@ services:
       postgres:
         condition: service_healthy
 
-  bootstrap:
+  bootstrap-base:
     image: alpine:3.20
     restart: "no"
     entrypoint: ["/bin/sh", "/scripts/bootstrap.sh"]
@@ -79,12 +76,17 @@ services:
       PGHOST: postgres
       PGUSER: postgres
       PGPASSWORD: ${POSTGRES_PASSWORD}
-      PGDATABASE: appdb
-      LOGIN_ORIGIN: http://localhost:${LOGIN_PORT:-8089}
-      POSTGREST_PORT: ${POSTGREST_PORT:-3001}
-      DEMO_USER_PASSWORD: Demo1!Pass
+      AUTHENTICATOR_PASSWORD: ${AUTHENTICATOR_PASSWORD}
+      # Colon-separated: lib (auth) SQL + example app SQL applied alphabetically
+      # by filename across both. Migrations resolve to siblings (/sql/migrations).
+      BOOTSTRAP_SQL_DIR: /sql/auth:/sql/example
+      BOOTSTRAP_MIGRATIONS_DIR: /sql/example-migrations
     volumes:
-      - ./examples/products/bootstrap:/scripts:ro
+      - ./bootstrap:/scripts:ro
+      - ./bootstrap/config.json:/config/config.json:ro
+      - ./projects/zitadel-pgrst-auth-angular/assets/db:/sql/auth:ro
+      - ./examples/products/db:/sql/example:ro
+      - ./examples/products/db/migrations:/sql/example-migrations:ro
       - zbootstrap:/bootstrap:ro
       - shared:/shared
     depends_on:
@@ -92,6 +94,25 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+
+  bootstrap:
+    image: alpine:3.20
+    restart: "no"
+    entrypoint: ["/bin/sh", "/scripts/bootstrap.sh"]
+    environment:
+      ZITADEL_API: http://zitadel:8080
+      PGHOST: postgres
+      PGUSER: postgres
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGREST_PORT: ${POSTGREST_PORT:-3001}
+    volumes:
+      - ./examples/products/bootstrap:/scripts:ro
+      - ./bootstrap/config.json:/config/config.json:ro
+      - zbootstrap:/bootstrap:ro
+      - shared:/shared
+    depends_on:
+      bootstrap-base:
+        condition: service_completed_successfully
 
   postgrest:
     image: postgrest/postgrest:latest
