@@ -18,6 +18,7 @@ import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/
  *   - POST /v2/users/human       (x-zitadel-orgid) -> { userId }
  *   - POST /management/v1/users/machine            -> { userId }
  *   - PUT  /management/v1/users/{id}/secret        -> { clientId, clientSecret }
+ *   - POST /management/v1/users/{id}/pats          -> { tokenId, token }
  *   - POST /management/v1/orgs/me/members          -> add Zitadel manager roles
  */
 @Injectable({ providedIn: 'root' })
@@ -69,6 +70,22 @@ export class ZitadelAdminService {
   async createMachineSecret(orgId: string, userId: string): Promise<{ clientId: string; clientSecret: string }> {
     return firstValueFrom(this.http.put<{ clientId: string; clientSecret: string }>(
       `${this.base}/management/v1/users/${userId}/secret`, {},
+      { headers: this.headers(orgId) }));
+  }
+
+  /**
+   * Create a Personal Access Token for a machine user. The bearer `token`
+   * is returned ONCE — callers must surface a copy action / warning.
+   * `expirationDate` is RFC3339; omit for the Zitadel default (no expiry).
+   */
+  async createMachinePat(
+    orgId: string,
+    userId: string,
+    expirationDate?: string
+  ): Promise<{ tokenId: string; token: string }> {
+    const body = expirationDate ? { expirationDate } : {};
+    return firstValueFrom(this.http.post<{ tokenId: string; token: string }>(
+      `${this.base}/management/v1/users/${userId}/pats`, body,
       { headers: this.headers(orgId) }));
   }
 

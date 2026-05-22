@@ -109,6 +109,17 @@ export class ProvisioningService {
     return { dbId, userId, clientId, clientSecret };
   }
 
+  /**
+   * ORG-level: create a PAT for an existing machine user in the caller's org.
+   * Returns the bearer token ONCE — surface a copy action in the UI.
+   * `expirationDate` is RFC3339; omit for the Zitadel default (no expiry).
+   */
+  async createMachinePat(userId: string, expirationDate?: string):
+    Promise<{ tokenId: string; token: string }> {
+    const orgId = await this.callerZitadelOrgId();
+    return this.zitadel.createMachinePat(orgId, userId, expirationDate);
+  }
+
   listUsers(): Promise<OrgUser[]> {
     return this.callRpc<OrgUser[]>('list_org_users', {});
   }
