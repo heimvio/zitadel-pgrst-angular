@@ -19,8 +19,20 @@ import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/
  *   - POST /management/v1/users/machine            -> { userId }
  *   - PUT  /management/v1/users/{id}/secret        -> { clientId, clientSecret }
  *   - POST /management/v1/users/{id}/pats          -> { tokenId, token }
+ *   - POST /management/v1/users/{id}/pats/_search  -> { result: MachinePat[] }
+ *   - DELETE /management/v1/users/{id}/pats/{tokenId}
  *   - POST /management/v1/orgs/me/members          -> add Zitadel manager roles
  */
+
+export interface MachinePat {
+  /** tokenId (the PAT's identifier in Zitadel; the bearer value itself is only returned at creation) */
+  id: string;
+  /** RFC3339; absent if the PAT was created without an expiry */
+  expirationDate?: string;
+  scopes?: string[];
+  /** RFC3339 creation timestamp from Zitadel's ObjectDetails */
+  creationDate?: string;
+}
 @Injectable({ providedIn: 'root' })
 export class ZitadelAdminService {
   constructor(private http: HttpClient, private auth: AuthService) {}
@@ -45,16 +57,24 @@ export class ZitadelAdminService {
     return res.organizationId;
   }
 
-  async createHumanUser(orgId: string, p: { givenName: string; familyName: string; email: string }): Promise<string> {
+  async createHumanUser(orgId: string, p: {
+    givenName: string; familyName: string; email: string;
+    /** BCP47 (e.g. 'de', 'en'). Steuert die Zitadel-Notification-Mail-Sprache —
+     *  Zitadel waehlt das passende message_text-Template pro Language; fehlt
+     *  preferredLanguage, faellt es auf die Instance-Default-Sprache zurueck. */
+    language?: string;
+  }): Promise<string> {
     // verification is a Zitadel oneof — set EITHER sendCode (invite mail) OR
     // isVerified. We pick sendCode so the new user gets an email invite and
     // sets their own password.
+    const profile: Record<string, unknown> = {
+      givenName: p.givenName,
+      familyName: p.familyName
+    };
+    if (p.language) profile['preferredLanguage'] = p.language;
     const res = await firstValueFrom(this.http.post<{ userId: string }>(
       `${this.base}/v2/users/human`,
-      {
-        profile: { givenName: p.givenName, familyName: p.familyName },
-        email: { email: p.email, sendCode: {} }
-      },
+      { profile, email: { email: p.email, sendCode: {} } },
       { headers: this.headers(orgId) }));
     return res.userId;
   }
@@ -86,6 +106,30 @@ export class ZitadelAdminService {
     const body = expirationDate ? { expirationDate } : {};
     return firstValueFrom(this.http.post<{ tokenId: string; token: string }>(
       `${this.base}/management/v1/users/${userId}/pats`, body,
+      { headers: this.headers(orgId) }));
+  }
+
+  /**
+   * List a machine user's PATs. The bearer values are NOT returned — only
+   * metadata (id, expirationDate, scopes, creationDate) is available after
+   * creation.
+   */
+  async listMachinePats(orgId: string, userId: string): Promise<MachinePat[]> {
+    const res = await firstValueFrom(this.http.post<{ result?: Array<Record<string, unknown>> }>(
+      `${this.base}/management/v1/users/${userId}/pats/_search`, {},
+      { headers: this.headers(orgId) }));
+    return (res.result ?? []).map(r => ({
+      id: String(r['id'] ?? ''),
+      expirationDate: r['expirationDate'] as string | undefined,
+      scopes: r['scopes'] as string[] | undefined,
+      creationDate: (r['details'] as { creationDate?: string } | undefined)?.creationDate
+    }));
+  }
+
+  /** Revoke a single PAT. */
+  async deleteMachinePat(orgId: string, userId: string, tokenId: string): Promise<void> {
+    await firstValueFrom(this.http.delete(
+      `${this.base}/management/v1/users/${userId}/pats/${tokenId}`,
       { headers: this.headers(orgId) }));
   }
 

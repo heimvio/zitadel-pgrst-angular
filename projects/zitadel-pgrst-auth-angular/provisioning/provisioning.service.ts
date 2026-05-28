@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/auth';
-import { ZitadelAdminService } from './zitadel-admin.service';
+import { ZitadelAdminService, MachinePat } from './zitadel-admin.service';
 import { PROVISIONING_CONFIG, ProvisioningConfig } from './provisioning-config';
 
 export interface OrgUser {
@@ -80,12 +80,18 @@ export class ProvisioningService {
   /**
    * ORG-level: invite a human user into the caller's own org with the given roles.
    */
-  async createUser(p: { email: string; roles: string[]; givenName?: string; familyName?: string }): Promise<ProvisionedUser> {
+  async createUser(p: {
+    email: string; roles: string[];
+    givenName?: string; familyName?: string;
+    /** BCP47-Sprachcode für Zitadel-Notification-Mails (z.B. 'de', 'en'). */
+    language?: string;
+  }): Promise<ProvisionedUser> {
     const orgId = await this.callerZitadelOrgId();
     const userId = await this.zitadel.createHumanUser(orgId, {
       givenName: p.givenName ?? p.email.split('@')[0],
       familyName: p.familyName ?? '-',
-      email: p.email
+      email: p.email,
+      language: p.language
     });
     const dbId = await this.callRpc<string>('provision_user', {
       p_zitadel_sub: userId, p_email: p.email, p_roles: p.roles
@@ -118,6 +124,18 @@ export class ProvisioningService {
     Promise<{ tokenId: string; token: string }> {
     const orgId = await this.callerZitadelOrgId();
     return this.zitadel.createMachinePat(orgId, userId, expirationDate);
+  }
+
+  /** ORG-level: list a machine user's PAT metadata (no bearer values). */
+  async listMachinePats(userId: string): Promise<MachinePat[]> {
+    const orgId = await this.callerZitadelOrgId();
+    return this.zitadel.listMachinePats(orgId, userId);
+  }
+
+  /** ORG-level: revoke a single PAT by its tokenId. */
+  async deleteMachinePat(userId: string, tokenId: string): Promise<void> {
+    const orgId = await this.callerZitadelOrgId();
+    return this.zitadel.deleteMachinePat(orgId, userId, tokenId);
   }
 
   listUsers(): Promise<OrgUser[]> {

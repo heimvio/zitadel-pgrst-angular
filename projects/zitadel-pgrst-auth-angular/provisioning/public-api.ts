@@ -1,4 +1,5 @@
 export { ZitadelAdminService } from './zitadel-admin.service';
+export type { MachinePat } from './zitadel-admin.service';
 export { ProvisioningService } from './provisioning.service';
 export type { OrgUser, ProvisionedOrg, ProvisionedUser } from './provisioning.service';
 export { PROVISIONING_CONFIG, PROVISIONING_DEFAULTS } from './provisioning-config';
