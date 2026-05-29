@@ -336,5 +336,31 @@ IAM_ORG_ADMIN_ROLE=$(shq "$ORG_ADMIN_ROLE")
 EOF
 echo "iam-bootstrap: wrote $SHARED/iam.env"
 
+# ---------------------------------------------------------------------------
+# Extension-Point fuer projekt-spezifische IAM-Erweiterungen.
+#
+# Die Library bleibt generisch (Org+Project+OIDC-App-Setup). Projekte koennen
+# zusaetzliche Schritte (Roles, Service-User, PAT, custom Grants) ueber ein
+# Skript /scripts/project-bootstrap.sh einklinken. Default: kein Hook
+# vorhanden -> noop.
+#
+# Das Hook-Skript erbt die Lib-Environment-Variablen (PAT, ORG_ID, PROJ_ID,
+# API, SHARED, ...). Idempotenz muss das Hook-Skript selbst regeln (eigener
+# Sentinel im $SHARED).
+# ---------------------------------------------------------------------------
+PROJECT_HOOK="${PROJECT_BOOTSTRAP_HOOK:-/scripts/project-bootstrap.sh}"
+if [ -f "$PROJECT_HOOK" ]; then
+  echo "iam-bootstrap: running project hook $PROJECT_HOOK ..."
+  export PAT API ORG_ID PROJ_ID CLIENT_ID OWNER_USER_ID OWNER_EMAIL SHARED \
+         ISSUER LOGIN_ORIGIN ORG_NAME ORG_ADMIN_ROLE
+  if ! sh "$PROJECT_HOOK"; then
+    echo "iam-bootstrap: project hook failed -- aborting"
+    exit 1
+  fi
+  echo "iam-bootstrap: project hook done."
+else
+  echo "iam-bootstrap: no project hook at $PROJECT_HOOK -- skipping"
+fi
+
 touch "$SHARED/iam-bootstrap.done"
 echo "iam-bootstrap: done."
