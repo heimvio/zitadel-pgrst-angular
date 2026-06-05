@@ -34,9 +34,28 @@ SHARED="${BOOTSTRAP_SHARED:-/shared}"
 PAT_FILE="${BOOTSTRAP_PAT_FILE:-/bootstrap/admin-client.pat}"
 
 mkdir -p "$SHARED"
-ZHOST="Host: localhost"
+# Host-Header muss zur Zitadel-EXTERNALDOMAIN passen, sonst findet Zitadel keine
+# Instanz (404). Aus dem Issuer ableiten (Scheme/Pfad/Port strippen). Demo
+# http://localhost:8080 -> localhost; Prod https://auth.example -> auth.example.
+# Frueher hart "Host: localhost" -> brach in Prod mit 404 / "API not reachable".
+ZHOST_DOMAIN="$(printf '%s' "$ISSUER" | sed -e 's#^[a-z][a-z]*://##' -e 's#/.*$##' -e 's#:[0-9][0-9]*$##')"
+ZHOST="Host: ${ZHOST_DOMAIN:-localhost}"
 
-apk add --no-cache curl jq postgresql16-client >/dev/null
+# curl/jq/psql sicherstellen. In schlanken Basis-Images nachinstallieren,
+# Paketmanager autodetektieren (apk=Alpine, apt-get=Debian). Frueher hart apk
+# -> brach auf Debian-Images mit exit 127.
+if ! command -v curl >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1 \
+   || ! command -v psql >/dev/null 2>&1; then
+  if command -v apk >/dev/null 2>&1; then
+    apk add --no-cache curl jq postgresql16-client >/dev/null
+  elif command -v apt-get >/dev/null 2>&1; then
+    apt-get update -qq >/dev/null \
+      && apt-get install -y -qq --no-install-recommends curl jq postgresql-client >/dev/null
+  else
+    echo "bootstrap: brauche curl/jq/psql, aber weder apk noch apt-get gefunden" >&2
+    exit 1
+  fi
+fi
 
 [ -f "$CONFIG" ] || { echo "iam-bootstrap: missing $CONFIG"; exit 1; }
 
