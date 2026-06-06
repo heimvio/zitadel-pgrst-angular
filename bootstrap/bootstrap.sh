@@ -96,6 +96,8 @@ OWNER_PW=$(jq -r '.iam.orgOwner.password' "$CONFIG")
 : "${PGPASSWORD:?PGPASSWORD must be set}"
 : "${AUTHENTICATOR_PASSWORD:?AUTHENTICATOR_PASSWORD must be set}"
 export PGHOST PGUSER PGPASSWORD
+# Leiser: NOTICE-Rauschen unterdruecken (WARNING/ERROR bleiben).
+export PGOPTIONS='-c client_min_messages=warning'
 
 # ---------------------------------------------------------------- Zitadel ---
 echo "iam-bootstrap: waiting for the Zitadel API ..."
@@ -162,7 +164,7 @@ collect_sql() { # PATTERN-WITH-COLONS  → stdout: one absolute path per line
 collect_sql "$SQL_DIR" | awk -F/ '{print $NF "\t" $0}' | sort | cut -f2- \
   | while read -r f; do
       echo "  - $(basename "$f")  ($(dirname "$f"))"
-      psql -v ON_ERROR_STOP=1 -v authpw="$AUTHENTICATOR_PASSWORD" -f "$f"
+      psql -q -v ON_ERROR_STOP=1 -v authpw="$AUTHENTICATOR_PASSWORD" -f "$f" >/dev/null
     done
 
 # DB role name override (auth.org_admin_role) — only when non-default.
@@ -209,7 +211,7 @@ if [ -n "$MIGRATIONS_DIR" ]; then
     fi
     echo "  → $v ($(dirname "$f"))"
     # \i runs inside the BEGIN/COMMIT block; psql still honours ON_ERROR_STOP.
-    psql -v ON_ERROR_STOP=1 <<SQL
+    psql -q -v ON_ERROR_STOP=1 >/dev/null <<SQL
 BEGIN;
 \i $f
 INSERT INTO auth.schema_migrations (version) VALUES ('$v');
@@ -306,7 +308,7 @@ echo "  PROJ_ID=$PROJ_ID  CLIENT_ID=$CLIENT_ID"
 
 # --------------------------------------------------------- DB mirror seed ---
 echo "iam-bootstrap: seeding auth.* mirror for the org + owner ..."
-psql -v ON_ERROR_STOP=1 <<SQL
+psql -q -v ON_ERROR_STOP=1 >/dev/null <<SQL
 INSERT INTO auth.organizations (zitadel_org_id, name) VALUES ('$ORG_ID', '$ORG_NAME')
   ON CONFLICT (zitadel_org_id) DO UPDATE SET name = EXCLUDED.name;
 INSERT INTO auth.users (zitadel_sub, org_id, email) VALUES
