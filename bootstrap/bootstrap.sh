@@ -333,7 +333,7 @@ cat > "$SHARED/config.json" <<EOF
     "issuer": "${ISSUER}",
     "clientId": "${CLIENT_ID}",
     "redirectPath": "/callback",
-    "scope": "openid profile email urn:zitadel:iam:user:resourceowner urn:zitadel:iam:org:project:id:zitadel:aud"
+    "scope": "openid profile email urn:zitadel:iam:user:resourceowner urn:zitadel:iam:org:project:id:zitadel:aud offline_access"
   }
 }
 EOF

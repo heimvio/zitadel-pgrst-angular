@@ -15,7 +15,7 @@ export const runtimeConfig: RuntimeConfig = {
     issuer: 'http://localhost:8090',
     clientId: '',
     redirectPath: '/callback',
-    scope: 'openid profile email urn:zitadel:iam:user:resourceowner'
+    scope: 'openid profile email urn:zitadel:iam:user:resourceowner offline_access'
   }
 };
 
