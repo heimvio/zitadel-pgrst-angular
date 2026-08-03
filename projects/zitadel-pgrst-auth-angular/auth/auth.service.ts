@@ -29,6 +29,11 @@ export class AuthService {
       issuer: runtimeConfig.oidc.issuer,
       clientId: runtimeConfig.oidc.clientId,
       redirectUri: window.location.origin + runtimeConfig.oidc.redirectPath,
+      // Muss in der Zitadel-App whitelisted sein (lib-bootstrap traegt
+      // $LOGIN_ORIGIN/ und ggf. /welcome ein) — sonst verweigert Zitadel den
+      // Redirect nach dem Logout und der User haengt auf „Session beenden".
+      postLogoutRedirectUri:
+        window.location.origin + (runtimeConfig.oidc.postLogoutPath ?? '/'),
       responseType: 'code',
       scope: runtimeConfig.oidc.scope,
       requireHttps: false,

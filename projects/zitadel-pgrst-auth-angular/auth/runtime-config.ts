@@ -6,7 +6,16 @@
  */
 export interface RuntimeConfig {
   postgrest: { url: string };
-  oidc: { issuer: string; clientId: string; redirectPath: string; scope: string };
+  oidc: {
+    issuer: string;
+    clientId: string;
+    redirectPath: string;
+    scope: string;
+    /** Pfad fuer post_logout_redirect_uri (muss in der Zitadel-App
+     *  whitelisted sein). Default '/': lib-bootstrap whitelistet
+     *  $LOGIN_ORIGIN/ immer; Apps mit Landing-Page setzen z.B. '/welcome'. */
+    postLogoutPath?: string;
+  };
 }
 
 export const runtimeConfig: RuntimeConfig = {
@@ -15,6 +24,7 @@ export const runtimeConfig: RuntimeConfig = {
     issuer: 'http://localhost:8090',
     clientId: '',
     redirectPath: '/callback',
+    postLogoutPath: '/',
     scope: 'openid profile email urn:zitadel:iam:user:resourceowner offline_access'
   }
 };
