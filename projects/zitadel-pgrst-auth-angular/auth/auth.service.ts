@@ -67,8 +67,16 @@ export class AuthService {
 
   /** JIT mirror (POST = writable) + load profile from whoami. */
   async loadProfile(): Promise<void> {
+    // Kein Token → kein PostgREST-Call: ein „Bearer null"-Header wird dort
+    // als PGRST301 quittiert (Stale-Session-Zustaende, in denen
+    // hasValidAccessToken() und getAccessToken() auseinanderlaufen).
+    const token = this.token;
+    if (!token) {
+      this.profile.set(null);
+      return;
+    }
     const base = runtimeConfig.postgrest.url;
-    const h = { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json' };
+    const h = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
     await fetch(`${base}/rpc/ensure_principal`, { method: 'POST', headers: h });
     const res = await fetch(`${base}/rpc/whoami`, { headers: h });
     this.profile.set(res.ok ? await res.json() as Profile : null);
