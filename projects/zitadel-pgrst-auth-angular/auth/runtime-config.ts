@@ -16,6 +16,20 @@ export interface RuntimeConfig {
      *  $LOGIN_ORIGIN/ immer; Apps mit Landing-Page setzen z.B. '/welcome'. */
     postLogoutPath?: string;
   };
+  /**
+   * Optional: zusaetzliche Kopfzeilen fuer die `fetch`-Aufrufe dieses
+   * Bausteins (`/rpc/ensure_principal`, `/rpc/whoami`). Die laufen bewusst am
+   * Angular-`HttpClient` und damit an den Interceptors der App vorbei — eine
+   * App, die z.B. eine Korrelations-Id auf jeden Request setzt, haette hier
+   * sonst ein Loch.
+   *
+   * Absichtlich generisch: der Baustein kennt weder Zweck noch Namen der
+   * Kopfzeilen und ruft den Rueckruf nur unmittelbar vor dem Request auf
+   * (jeder Aufruf darf ein anderes Ergebnis liefern). Wird NICHT aus
+   * `config.json` geladen — eine Funktion ist kein JSON; die App setzt sie
+   * beim Start selbst (`runtimeConfig.extraHeaders = …`).
+   */
+  extraHeaders?: () => Record<string, string>;
 }
 
 export const runtimeConfig: RuntimeConfig = {

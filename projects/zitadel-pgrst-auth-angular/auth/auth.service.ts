@@ -76,9 +76,25 @@ export class AuthService {
       return;
     }
     const base = runtimeConfig.postgrest.url;
-    const h = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+    const h: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...extraHeaders()
+    };
     await fetch(`${base}/rpc/ensure_principal`, { method: 'POST', headers: h });
     const res = await fetch(`${base}/rpc/whoami`, { headers: h });
     this.profile.set(res.ok ? await res.json() as Profile : null);
+  }
+}
+
+/**
+ * Optionale App-Kopfzeilen (siehe `RuntimeConfig.extraHeaders`). Ein Fehler im
+ * Rueckruf der App darf die Anmeldung nicht kippen — dann eben ohne.
+ */
+function extraHeaders(): Record<string, string> {
+  try {
+    return runtimeConfig.extraHeaders?.() ?? {};
+  } catch {
+    return {};
   }
 }
