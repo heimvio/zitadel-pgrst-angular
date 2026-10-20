@@ -1,0 +1,23 @@
+# ZITADEL FirstInstance — loaded only on the very first bootstrap (--steps).
+# Creates the instance admin + a machine-user PAT that the bootstrap service
+# uses to create orgs/project/OIDC-app/users idempotently via the API.
+FirstInstance:
+  PatPath: /bootstrap/admin-client.pat
+  Org:
+    Name: Demo
+    Human:
+      UserName: admin
+      Password: "Demo1!Admin"
+      FirstName: Admin
+      LastName: User
+      Email:
+        Address: admin@localhost
+        Verified: true
+      PreferredLanguage: en
+      PasswordChangeRequired: false
+    Machine:
+      Machine:
+        Username: admin-client
+        Name: Admin Client
+      Pat:
+        ExpirationDate: "2099-01-01T00:00:00Z"

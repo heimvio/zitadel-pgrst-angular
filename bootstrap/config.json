@@ -1,0 +1,30 @@
+{
+  "iam": {
+    "databaseName": "appdb",
+    "orgName": "Company A",
+    "projectName": null,
+    "appName": null,
+    "orgAdminRole": "org_owner",
+    "loginOrigin": "http://localhost:8089",
+    "orgOwner": {
+      "givenName": "Alice",
+      "familyName": "Staff",
+      "email": "alice@a.demo",
+      "password": "Demo1!Pass"
+    }
+  },
+  "app": {
+    "secondOrg": { "name": "Company B" },
+    "demoPassword": "Demo1!Pass",
+    "iamOwnerExtraRoles": ["staff"],
+    "demoUsers": [
+      { "given": "Bob",   "family": "Customer", "email": "bob@a.demo",   "roles": ["customer"], "org": "iam" },
+      { "given": "Carol", "family": "Staff",    "email": "carol@b.demo", "roles": ["staff","org_owner"], "org": "second" },
+      { "given": "Dave",  "family": "Customer", "email": "dave@b.demo",  "roles": ["customer"], "org": "second" }
+    ],
+    "products": {
+      "iam":    [["A-Widget", 9.99], ["A-Gadget", 19.50], ["A-Doohickey", 4.25]],
+      "second": [["B-Sprocket", 12.00], ["B-Cog", 7.75]]
+    }
+  }
+}
