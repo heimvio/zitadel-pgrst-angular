@@ -1,6 +1,6 @@
 import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard } from '@proxvex/zitadel-pgrst-auth-angular/auth';
+import { authGuard, roleGuard } from '@heimvio/zitadel-pgrst-angular/auth';
 import { PROVISIONING_CONFIG, PROVISIONING_DEFAULTS, ProvisioningConfig } from './provisioning-config';
 import { OrgListComponent } from './components/org-list.component';
 import { OrgUsersListComponent } from './components/org-users-list.component';

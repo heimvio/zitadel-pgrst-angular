@@ -1,15 +1,15 @@
 {
-  "name": "zitadel-pgrst-auth-workspace",
+  "name": "zitadel-pgrst-angular-workspace",
   "version": "0.0.0",
   "private": true,
-  "description": "ng-packagr workspace for @proxvex/zitadel-pgrst-auth-angular (Zitadel + PostgREST + RLS building blocks: auth + provisioning).",
+  "description": "ng-packagr workspace for @heimvio/zitadel-pgrst-angular (Zitadel + PostgREST + RLS building blocks: auth + provisioning).",
   "workspaces": [
     "examples/products/web"
   ],
   "scripts": {
-    "build:lib": "ng build zitadel-pgrst-auth-angular",
-    "pack:lib": "cd dist/zitadel-pgrst-auth-angular && npm pack",
-    "publish:lib": "cd dist/zitadel-pgrst-auth-angular && npm publish",
+    "build:lib": "ng build zitadel-pgrst-angular",
+    "pack:lib": "cd dist/zitadel-pgrst-angular && npm pack",
+    "publish:lib": "cd dist/zitadel-pgrst-angular && npm publish",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:install": "playwright install --with-deps chromium"

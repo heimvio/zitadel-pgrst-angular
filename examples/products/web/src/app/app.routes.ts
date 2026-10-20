@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { authGuard, roleGuard } from '@proxvex/zitadel-pgrst-auth-angular/auth';
-import { OrgUsersListComponent } from '@proxvex/zitadel-pgrst-auth-angular/provisioning';
+import { authGuard, roleGuard } from '@heimvio/zitadel-pgrst-angular/auth';
+import { OrgUsersListComponent } from '@heimvio/zitadel-pgrst-angular/provisioning';
 import { HomeComponent } from './home.component';
 import { CallbackComponent } from './callback.component';
 

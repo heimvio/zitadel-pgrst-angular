@@ -1,9 +1,11 @@
 # =============================================================================
-# zitadel-pgrst-auth — reproducible deliverable
+# zitadel-pgrst-angular — reproducible deliverable
 # `docker compose up` -> Postgres+auth schema, Zitadel (bootstrap: 2 companies,
 # staff/customer users, OIDC app), PostgREST (JWKS/RS256), Angular app.
 # Definition of Done: login works, tenant isolation visible.
 # =============================================================================
+name: zitadel-pgrst-angular
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -84,7 +86,7 @@ services:
     volumes:
       - ./bootstrap:/scripts:ro
       - ./bootstrap/config.json:/config/config.json:ro
-      - ./projects/zitadel-pgrst-auth-angular/assets/db:/sql/auth:ro
+      - ./projects/zitadel-pgrst-angular/assets/db:/sql/auth:ro
       - ./examples/products/db:/sql/example:ro
       - ./examples/products/db/migrations:/sql/example-migrations:ro
       - zbootstrap:/bootstrap:ro

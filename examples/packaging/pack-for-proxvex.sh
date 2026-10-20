@@ -81,7 +81,7 @@ OUT_DIR="$LIB_REPO/dist"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 
-LIB_DIST="$LIB_REPO/dist/zitadel-pgrst-auth-angular"
+LIB_DIST="$LIB_REPO/dist/zitadel-pgrst-angular"
 LIB_DB="$LIB_DIST/assets/db"
 
 echo "pack: (1/4) building library ..." >&2

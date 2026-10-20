@@ -14,9 +14,9 @@
     "target": "ES2022",
     "module": "preserve",
     "paths": {
-      "@proxvex/zitadel-pgrst-auth-angular": ["projects/zitadel-pgrst-auth-angular/src/public-api.ts"],
-      "@proxvex/zitadel-pgrst-auth-angular/auth": ["projects/zitadel-pgrst-auth-angular/auth/public-api.ts"],
-      "@proxvex/zitadel-pgrst-auth-angular/provisioning": ["projects/zitadel-pgrst-auth-angular/provisioning/public-api.ts"]
+      "@heimvio/zitadel-pgrst-angular": ["projects/zitadel-pgrst-angular/src/public-api.ts"],
+      "@heimvio/zitadel-pgrst-angular/auth": ["projects/zitadel-pgrst-angular/auth/public-api.ts"],
+      "@heimvio/zitadel-pgrst-angular/provisioning": ["projects/zitadel-pgrst-angular/provisioning/public-api.ts"]
     }
   },
   "angularCompilerOptions": {
@@ -27,6 +27,6 @@
   },
   "files": [],
   "references": [
-    { "path": "./projects/zitadel-pgrst-auth-angular/tsconfig.lib.json" }
+    { "path": "./projects/zitadel-pgrst-angular/tsconfig.lib.json" }
   ]
 }

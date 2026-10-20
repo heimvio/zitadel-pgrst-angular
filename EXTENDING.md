@@ -3,7 +3,7 @@
 The **core** is two SQL bundles + an Angular library with two entrypoints:
 
 ```
-projects/zitadel-pgrst-auth-angular/
+projects/zitadel-pgrst-angular/
   assets/db/
     00_roles.sql            # PostgREST roles
     01_auth_schema.sql      # auth.organizations / users / user_roles + JIT + accessors
@@ -76,8 +76,8 @@ The core ships:
 ### 3.1 Wire it in your `main.ts`
 
 ```ts
-import { provideAuth } from '@proxvex/zitadel-pgrst-auth-angular/auth';
-import { provideProvisioning, provisioningRoutes } from '@proxvex/zitadel-pgrst-auth-angular/provisioning';
+import { provideAuth } from '@heimvio/zitadel-pgrst-angular/auth';
+import { provideProvisioning, provisioningRoutes } from '@heimvio/zitadel-pgrst-angular/provisioning';
 
 bootstrapApplication(AppComponent, {
   providers: [
@@ -164,7 +164,7 @@ auth.claims();             // raw OIDC id-token claims (for callerZitadelOrgId e
 })
 ```
 
-`provideAuth()` does, via `APP_INITIALIZER`: load `config.json` → OIDC init → after login call `POST /rpc/ensure_principal` once (writable tx, JIT) → `whoami`. GET runs read-only; `ensure_principal` is deliberately a no-op there.
+`provideAuth()` does, via `APP_INITIALIZER`: load `config.json` (relative to `<base href>`; override with `provideAuth({ configUrl: '/config.json' })`) → OIDC init → after login call `POST /rpc/ensure_principal` once (writable tx, JIT) → `whoami`. GET runs read-only; `ensure_principal` is deliberately a no-op there.
 
 ## App boundaries / responsibilities
 

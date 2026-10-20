@@ -1,6 +1,6 @@
 {
   "$schema": "../../node_modules/ng-packagr/ng-package.schema.json",
-  "dest": "../../dist/zitadel-pgrst-auth-angular",
+  "dest": "../../dist/zitadel-pgrst-angular",
   "lib": {
     "entryFile": "src/public-api.ts"
   },

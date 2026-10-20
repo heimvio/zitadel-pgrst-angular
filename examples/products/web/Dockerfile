@@ -1,14 +1,14 @@
 # Build of the example app.
 #
 # Build context = repo root. We first build the library (ng-packagr) from
-# projects/zitadel-pgrst-auth-angular, then npm-install it into the example
+# projects/zitadel-pgrst-angular, then npm-install it into the example
 # app via the file:../../../dist/... path defined in examples/products/web/package.json.
 FROM node:20-alpine AS lib
 WORKDIR /repo
 COPY package.json tsconfig.json angular.json ./
 COPY projects ./projects
 RUN npm install --no-audit --no-fund \
- && npx ng build zitadel-pgrst-auth-angular
+ && npx ng build zitadel-pgrst-angular
 
 FROM node:20-alpine AS app
 WORKDIR /app

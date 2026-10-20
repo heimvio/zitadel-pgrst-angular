@@ -82,8 +82,8 @@ Proves the full chain with a real Zitadel JWT (machine user via
 client_credentials → PostgREST JWKS verify → JIT → RLS):
 
 ```bash
-docker run --rm --network zitadel-pgrst-auth_default \
-  -v zitadel-pgrst-auth_zbootstrap:/bootstrap:ro \
+docker run --rm --network zitadel-pgrst-angular_default \
+  -v zitadel-pgrst-angular_zbootstrap:/bootstrap:ro \
   -v "$PWD/verify.sh:/verify.sh:ro" alpine:3.20 sh /verify.sh
 ```
 

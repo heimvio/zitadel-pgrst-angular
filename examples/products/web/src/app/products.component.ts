@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/auth';
+import { AuthService, runtimeConfig } from '@heimvio/zitadel-pgrst-angular/auth';
 
 interface Product { name: string; price: number; category: string; }
 
@@ -15,7 +15,7 @@ interface Product { name: string; price: number; category: string; }
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <h1>zitadel-pgrst-auth — Angular example</h1>
+    <h1>zitadel-pgrst-angular — Angular example</h1>
     <p class="muted">Zitadel login → JWT (RS256) → PostgREST with RLS.
       Org isolation via <code>auth.org_id()</code>, roles via
       <code>auth.user_roles</code> (app names: <code>staff</code>/<code>customer</code>).</p>

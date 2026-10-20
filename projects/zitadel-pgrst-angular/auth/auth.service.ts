@@ -21,6 +21,14 @@ export class AuthService {
   readonly profile = signal<Profile | null>(null);
   readonly ready = signal<boolean>(false);
 
+  private resolveInitialized!: () => void;
+  /**
+   * Resolves once `init()` has finished (logged in or not). Lets a second app
+   * initializer wait for the code flow without depending on the order in
+   * which Angular starts initializers (it starts them all, then awaits all).
+   */
+  readonly initialized: Promise<void> = new Promise<void>(r => { this.resolveInitialized = r; });
+
   constructor(private oauth: OAuthService) {}
 
   /** Called by the APP_INITIALIZER: configure OIDC + finish the code flow. */
@@ -46,9 +54,16 @@ export class AuthService {
       if (this.oauth.hasValidAccessToken()) await this.loadProfile();
     } catch { /* not logged in */ }
     this.ready.set(true);
+    this.resolveInitialized();
   }
 
-  login(): void { this.oauth.initCodeFlow(); }
+  /**
+   * Starts the code flow. `state` is carried through the OIDC round trip and
+   * is available after the callback as `OAuthService.state` — URI-encoded
+   * once (angular-oauth2-oidc encodes the additional state itself), so the
+   * receiving app reads it with `decodeURIComponent(oauth.state)`.
+   */
+  login(state?: string): void { this.oauth.initCodeFlow(state ?? ''); }
   logout(): void { this.profile.set(null); this.oauth.logOut(); }
 
   get token(): string | null { return this.oauth.getAccessToken() || null; }

@@ -2,8 +2,8 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { provideAuth } from '@proxvex/zitadel-pgrst-auth-angular/auth';
-import { provideProvisioning } from '@proxvex/zitadel-pgrst-auth-angular/provisioning';
+import { provideAuth } from '@heimvio/zitadel-pgrst-angular/auth';
+import { provideProvisioning } from '@heimvio/zitadel-pgrst-angular/provisioning';
 import { routes } from './app/app.routes';
 
 @Component({

@@ -13,7 +13,7 @@ set -euo pipefail
 API="http://localhost:8090"
 ZH="Host: localhost"
 
-PAT="$(docker run --rm -v zitadel-pgrst-auth_zbootstrap:/b:ro alpine:3.20 cat /b/admin-client.pat)"
+PAT="$(docker run --rm -v zitadel-pgrst-angular_zbootstrap:/b:ro alpine:3.20 cat /b/admin-client.pat)"
 AUTH="Authorization: Bearer $PAT"
 JSON="Content-Type: application/json"
 

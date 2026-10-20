@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AuthService } from '@proxvex/zitadel-pgrst-auth-angular/auth';
+import { AuthService } from '@heimvio/zitadel-pgrst-angular/auth';
 import { ProductsComponent } from './products.component';
 
 /**
@@ -28,7 +28,7 @@ import { ProductsComponent } from './products.component';
     <ng-template #loading><p class="muted">Loading …</p></ng-template>
 
     <ng-template #landing>
-      <h1>zitadel-pgrst-auth — Angular example</h1>
+      <h1>zitadel-pgrst-angular — Angular example</h1>
       <p class="muted">Zitadel login → JWT (RS256) → PostgREST with RLS.
         Tenant isolation via <code>auth.org_id()</code>, roles via
         <code>auth.user_roles</code> (app names <code>staff</code>/<code>customer</code>).</p>

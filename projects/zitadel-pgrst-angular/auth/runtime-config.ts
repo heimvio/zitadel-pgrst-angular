@@ -1,8 +1,13 @@
 /**
  * Runtime configuration of the generic auth building block.
- * Loaded at startup from `/config.json` (written by the bootstrap), so ONE
+ * Loaded at startup from `config.json` (written by the bootstrap), so ONE
  * build runs against any environment and no secrets are in the bundle
  * (only public URLs + the public OIDC clientId).
+ *
+ * The URL is relative to the document base by default (`config.json`). An app
+ * that is served below a sub path but shares the session of the app at the
+ * origin root (e.g. an extension under `/apps/<slug>/`) passes an absolute
+ * path instead: `provideAuth({ configUrl: '/config.json' })`.
  */
 export interface RuntimeConfig {
   postgrest: { url: string };
@@ -43,10 +48,17 @@ export const runtimeConfig: RuntimeConfig = {
   }
 };
 
-/** Loads /config.json and merges it into runtimeConfig (fetch, before DI). */
-export async function loadRuntimeConfig(): Promise<void> {
+/** Default location of the runtime configuration: relative to `<base href>`. */
+export const DEFAULT_CONFIG_URL = 'config.json';
+
+/**
+ * Loads the runtime configuration and merges it into `runtimeConfig`
+ * (fetch, before DI). `configUrl` defaults to the relative `config.json`;
+ * pass an absolute path (`/config.json`) or a full URL to read it elsewhere.
+ */
+export async function loadRuntimeConfig(configUrl: string = DEFAULT_CONFIG_URL): Promise<void> {
   try {
-    const r = await fetch('config.json', { cache: 'no-store' });
+    const r = await fetch(configUrl, { cache: 'no-store' });
     if (!r.ok) return;
     const c = await r.json() as Partial<RuntimeConfig>;
     if (c.postgrest) Object.assign(runtimeConfig.postgrest, c.postgrest);

@@ -1,13 +1,17 @@
 {
-  "name": "@proxvex/zitadel-pgrst-auth-angular",
-  "version": "0.1.0",
+  "name": "@heimvio/zitadel-pgrst-angular",
+  "version": "0.2.0-dev.1",
   "description": "Angular building blocks for Zitadel + PostgREST + RLS multi-tenancy. Two entrypoints: /auth (OIDC, JIT, role guards) and /provisioning (admin UI, Zitadel mgmt API, base SQL RPCs). SQL schema ships as assets.",
-  "keywords": ["zitadel", "postgrest", "rls", "multi-tenancy", "angular", "oidc"],
+  "keywords": [
+    "zitadel",
+    "postgrest",
+    "rls",
+    "multi-tenancy",
+    "angular",
+    "oidc"
+  ],
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/proxvex/zitadel-pgrst-auth.git"
-  },
+  "repository": "github:heimvio/zitadel-pgrst-angular",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
@@ -22,5 +26,9 @@
   "dependencies": {
     "tslib": "^2.3.0"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "homepage": "https://github.com/heimvio/zitadel-pgrst-angular#readme",
+  "bugs": {
+    "url": "https://github.com/heimvio/zitadel-pgrst-angular/issues"
+  }
 }

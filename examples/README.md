@@ -14,8 +14,8 @@ compose stack lives at the **repository root** (it wires Postgres, Zitadel, the
 bootstrap, PostgREST and the example web app together). Start it from the
 
 ```bash
-git clone <this-repo> zitadel-pgrst-auth
-cd zitadel-pgrst-auth          # the directory that contains docker-compose.yml
+git clone <this-repo> zitadel-pgrst-angular
+cd zitadel-pgrst-angular          # the directory that contains docker-compose.yml
 docker compose up
 ```
 

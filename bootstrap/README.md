@@ -9,7 +9,7 @@ Postgres. Same script runs in the demo `docker compose` and in production
 1. Refreshes `/shared/jwks.json` and disables Zitadel LoginV2 (instance feature).
 2. Creates the Postgres database (`iam.databaseName`, default = slug of
    `iam.orgName`).
-3. Applies the core auth SQL from `projects/zitadel-pgrst-auth-angular/assets/db/`:
+3. Applies the core auth SQL from `projects/zitadel-pgrst-angular/assets/db/`:
    `00_roles.sql`, `01_auth_schema.sql`, `02_provisioning.sql`.
 4. Optionally overrides `auth.org_admin_role()` with a custom role name
    (e.g. `hausverwaltung`).
@@ -75,7 +75,7 @@ docker run --rm \
   -e PGHOST=... -e PGUSER=postgres -e PGPASSWORD=... \
   -e AUTHENTICATOR_PASSWORD=... \
   -v "$PWD/bootstrap/config.json:/config/config.json:ro" \
-  -v "$PWD/projects/zitadel-pgrst-auth-angular/assets/db:/sql/auth:ro" \
+  -v "$PWD/projects/zitadel-pgrst-angular/assets/db:/sql/auth:ro" \
   -v /var/secrets/zitadel-admin.pat:/bootstrap/admin-client.pat:ro \
   -v iam_shared:/shared \
   -w / \

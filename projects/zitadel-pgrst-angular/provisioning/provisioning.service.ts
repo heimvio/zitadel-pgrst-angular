@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AuthService, runtimeConfig } from '@proxvex/zitadel-pgrst-auth-angular/auth';
+import { AuthService, runtimeConfig } from '@heimvio/zitadel-pgrst-angular/auth';
 import { ZitadelAdminService, MachinePat } from './zitadel-admin.service';
 import { PROVISIONING_CONFIG, ProvisioningConfig } from './provisioning-config';
 

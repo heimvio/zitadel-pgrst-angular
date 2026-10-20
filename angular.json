@@ -4,23 +4,23 @@
   "cli": { "packageManager": "npm" },
   "newProjectRoot": "projects",
   "projects": {
-    "zitadel-pgrst-auth-angular": {
+    "zitadel-pgrst-angular": {
       "projectType": "library",
-      "root": "projects/zitadel-pgrst-auth-angular",
-      "sourceRoot": "projects/zitadel-pgrst-auth-angular",
+      "root": "projects/zitadel-pgrst-angular",
+      "sourceRoot": "projects/zitadel-pgrst-angular",
       "prefix": "base",
       "architect": {
         "build": {
           "builder": "@angular/build:ng-packagr",
           "options": {
-            "project": "projects/zitadel-pgrst-auth-angular/ng-package.json"
+            "project": "projects/zitadel-pgrst-angular/ng-package.json"
           },
           "configurations": {
             "production": {
-              "tsConfig": "projects/zitadel-pgrst-auth-angular/tsconfig.lib.prod.json"
+              "tsConfig": "projects/zitadel-pgrst-angular/tsconfig.lib.prod.json"
             },
             "development": {
-              "tsConfig": "projects/zitadel-pgrst-auth-angular/tsconfig.lib.json"
+              "tsConfig": "projects/zitadel-pgrst-angular/tsconfig.lib.json"
             }
           },
           "defaultConfiguration": "production"

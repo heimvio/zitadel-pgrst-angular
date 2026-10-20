@@ -45,7 +45,7 @@ cd "$ROOT"
 
 DEV_OVERLAY=("-f" "docker-compose.yml" "-f" "docker-compose.dev.yml")
 MODE_FILE="$ROOT/.e2e-mode"
-LIB_DB="projects/zitadel-pgrst-auth-angular/assets/db"
+LIB_DB="projects/zitadel-pgrst-angular/assets/db"
 
 # ----------------------------------------------------------------------------
 log()   { printf '\033[1;34m[e2e]\033[0m %s\n' "$*"; }
@@ -73,8 +73,8 @@ build_local() {
     && npm run build --silent )
   # `ng build` wipes dist/browser, so re-stage the runtime config from the
   # shared volume (in dev mode the python server reads dist/browser:ro).
-  if docker volume inspect zitadel-pgrst-auth_shared >/dev/null 2>&1; then
-    docker run --rm -v zitadel-pgrst-auth_shared:/shared:ro alpine:3.20 \
+  if docker volume inspect zitadel-pgrst-angular_shared >/dev/null 2>&1; then
+    docker run --rm -v zitadel-pgrst-angular_shared:/shared:ro alpine:3.20 \
       cat /shared/config.json > examples/products/web/dist/browser/config.json \
       2>/dev/null \
       && log "config.json restaged to dist/browser/"
@@ -152,7 +152,7 @@ cmd_refresh() {
   log "re-running bootstrap (preserves DB + Zitadel state) …"
   # Drop the sentinel by mounting the shared volume into a throwaway helper.
   docker compose run --rm --no-deps --entrypoint sh \
-    -v zitadel-pgrst-auth_shared:/shared bootstrap \
+    -v zitadel-pgrst-angular_shared:/shared bootstrap \
     -c 'rm -f /shared/bootstrap.done && echo "bootstrap.done cleared"' || true
   docker compose up -d --force-recreate bootstrap
   wait_for_bootstrap
